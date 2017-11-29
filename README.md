@@ -2,7 +2,7 @@
 now this program can read the STL model and transform the vertex positions of a primitive into a regular eulerian grid
 use makefile to run it
 ``` javascript
-cd 3dprint
+cd 3dprint/
 make
 ```
 I uploaded an example for it `Oblique cube.STL`
