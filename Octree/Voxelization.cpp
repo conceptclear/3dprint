@@ -61,14 +61,15 @@ void Voxelization::SurfacePoint(unsigned int x, unsigned int y, unsigned int z)
     //            cout<<node->orderstr<<endl;
 }
 
-float Voxelization::ChangeCoordinate(float coordinate,float max,float min)
+unsigned int Voxelization::ChangeCoordinate(float coordinate,float max,float min)
 {
-    float data = (coordinate-min)*pow(2,max_height-1)/(max-min);
+    unsigned int data = (coordinate-min)*pow(2,max_height-1)/(max-min);
     //    cout<<data<<endl;
-    return data;
+    unsigned int output = CheckNum(data);
+    return output;
 }
 
-float Voxelization::CheckPoint(float num)
+unsigned int Voxelization::CheckNum(unsigned int num)
 {
     if(num==pow(2,max_height-1))
         num--;
@@ -83,10 +84,313 @@ void Voxelization::PointToVoxel(vector<CVertex> VectorPoint)
         unsigned int voxelx = ChangeCoordinate(VectorPoint[i].m_Point[0],xmax,xmin);
         unsigned int voxely = ChangeCoordinate(VectorPoint[i].m_Point[1],ymax,ymin);
         unsigned int voxelz = ChangeCoordinate(VectorPoint[i].m_Point[2],zmax,zmin);
-        voxelx = CheckPoint(voxelx);
-        voxely = CheckPoint(voxely);
-        voxelz = CheckPoint(voxelz);
         //        cout<<binaryx<<binaryy<<binaryz<<endl;
         SurfacePoint(voxelx,voxely,voxelz);
+    }
+}
+
+void Voxelization::EdgeToVoxel(vector<CEdge> VectorEdge, vector<CVertex> VectorPoint)
+{
+    for(int i=0;i<int(VectorEdge.size());i++)
+    {
+        //change the coordinate system
+        unsigned int strx1 = ChangeCoordinate(VectorPoint[VectorEdge[i].PointIndex[0]].m_Point[0],xmax,xmin);
+        unsigned int strx2 = ChangeCoordinate(VectorPoint[VectorEdge[i].PointIndex[1]].m_Point[0],xmax,xmin);
+        unsigned int stry1 = ChangeCoordinate(VectorPoint[VectorEdge[i].PointIndex[0]].m_Point[1],ymax,ymin);
+        unsigned int stry2 = ChangeCoordinate(VectorPoint[VectorEdge[i].PointIndex[1]].m_Point[1],ymax,ymin);
+        unsigned int strz1 = ChangeCoordinate(VectorPoint[VectorEdge[i].PointIndex[0]].m_Point[2],zmax,zmin);
+        unsigned int strz2 = ChangeCoordinate(VectorPoint[VectorEdge[i].PointIndex[1]].m_Point[2],zmax,zmin);
+        OctreePoint point1(strx1,stry1,strz1);
+        OctreePoint point2(strx2,stry2,strz2);
+        EdgeChange_Bresenham(point1,point2);
+    }
+}
+
+void Voxelization::FacetToVoxel(vector<CFacet> VectorFacet, vector<CVertex> VectorPoint)
+{
+    for(int i=0;i<int(VectorFacet.size());i++)
+    {
+        //change the coordinate system
+        unsigned int strx1 = ChangeCoordinate(VectorPoint[VectorFacet[i].PointIndex[0]].m_Point[0],xmax,xmin);
+        unsigned int strx2 = ChangeCoordinate(VectorPoint[VectorFacet[i].PointIndex[1]].m_Point[0],xmax,xmin);
+        unsigned int strx3 = ChangeCoordinate(VectorPoint[VectorFacet[i].PointIndex[2]].m_Point[0],xmax,xmin);
+        unsigned int stry1 = ChangeCoordinate(VectorPoint[VectorFacet[i].PointIndex[0]].m_Point[1],ymax,ymin);
+        unsigned int stry2 = ChangeCoordinate(VectorPoint[VectorFacet[i].PointIndex[1]].m_Point[1],ymax,ymin);
+        unsigned int stry3 = ChangeCoordinate(VectorPoint[VectorFacet[i].PointIndex[2]].m_Point[1],ymax,ymin);
+        unsigned int strz1 = ChangeCoordinate(VectorPoint[VectorFacet[i].PointIndex[0]].m_Point[2],zmax,zmin);
+        unsigned int strz2 = ChangeCoordinate(VectorPoint[VectorFacet[i].PointIndex[1]].m_Point[2],zmax,zmin);
+        unsigned int strz3 = ChangeCoordinate(VectorPoint[VectorFacet[i].PointIndex[2]].m_Point[2],zmax,zmin);
+        OctreePoint point1(strx1,stry1,strz1);
+        OctreePoint point2(strx2,stry2,strz2);
+        OctreePoint point3(strx3,stry3,strz3);
+        //get the normal of the facet
+        float Normal_x=VectorFacet[i].m_Normal[0];
+        float Normal_y=VectorFacet[i].m_Normal[1];
+        float Normal_z=VectorFacet[i].m_Normal[2];
+        //the function of this facet can be given by:
+        //Normal_x*(x-point1.x)+Normal_y*(y-point1.y)+Normal_z*(z-point1.z)=0
+        //z=point1.z+Normal_x/Normal_z*(x-point1.x)+Normal_y/Normal_z*(y-point1.y)
+    }
+}
+
+void Voxelization::EdgeChange_Bresenham(OctreePoint point1,OctreePoint point2)
+{
+    if((point1.x==point2.x)&&(point1.y==point2.y)&&(point1.z==point2.z))return;
+    if((point1.x==point2.x)&&(point1.y==point2.y))
+        PerpendicularToSurfaceEdge(point1,point2,3);
+    else if((point1.y==point2.y)&&(point1.z==point2.z))
+        PerpendicularToSurfaceEdge(point1,point2,1);
+    else if((point1.x==point2.x)&&(point1.z==point2.z))
+        PerpendicularToSurfaceEdge(point1,point2,2);
+    else if(point1.x==point2.x)
+        ParallelToSurfaceEdge_Bresenham(point1,point2,1);
+    else if(point1.y==point2.y)
+        ParallelToSurfaceEdge_Bresenham(point1,point2,2);
+    else if(point1.z==point2.z)
+        ParallelToSurfaceEdge_Bresenham(point1,point2,3);
+    else
+        GeneralLocationEdge_Bresenham(point1,point2);
+}
+
+void Voxelization::PerpendicularToSurfaceEdge(OctreePoint point1,OctreePoint point2, int serial)
+{
+    int diffx=point1.x-point2.x;
+    int diffy=point1.y-point2.y;
+    int diffz=point1.z-point2.z;
+    int nummax,nummin;
+    switch(serial)
+    {
+        case 1:
+            {
+                nummax=diffx>0?point1.x:point2.x;
+                nummin=diffx>0?point2.x:point1.x;
+                for(int i = nummin+1;i<nummax;i++)
+                {
+                    SurfacePoint(i,point1.y,point1.z);
+                }
+            }
+            break;
+        case 2:
+            {
+                nummax=diffy>0?point1.y:point2.y;
+                nummin=diffy>0?point2.y:point1.y;
+                for(int i = nummin+1;i<nummax;i++)
+                {
+                    SurfacePoint(point1.x,i,point1.z);
+                }
+            }
+            break;
+        case 3:
+            {
+                nummax=diffz>0?point1.z:point2.z;
+                nummin=diffz>0?point2.z:point1.z;
+                for(int i = nummin+1;i<nummax;i++)
+                {
+                    SurfacePoint(point1.x,point1.y,i);
+                }
+            }
+            break;
+        default:
+            cout<<"error occured in PerpendicularToSurfaceEdge"<<endl;
+            break;
+    }
+}
+
+void Voxelization::ParallelToSurfaceEdge_Bresenham(OctreePoint point1, OctreePoint point2, int serial)
+{
+    int diffx = point1.x-point2.x;
+    int diffy = point1.y-point2.y;
+    int diffz = point1.z-point2.z;
+    int sign_x = diffx>0?1:-1;
+    int sign_y = diffy>0?1:-1;
+    int sign_z = diffz>0?1:-1;
+    unsigned int strx = point2.x;
+    unsigned int stry = point2.y;
+    unsigned int strz = point2.z;
+    int eps = 0; //eps is cumulative error
+    diffx = abs(diffx);
+    diffy = abs(diffy);
+    diffz = abs(diffz); //can use sign to judge positive and negative
+    switch(serial)
+    {
+        case 1:
+            {
+                if(diffy>=diffz)
+                {
+                    for(;stry!=point1.y-sign_y;)
+                    {
+                        stry+=sign_y;
+                        eps+=diffz;
+                        if((eps<<1)>=diffy)
+                        {
+                            strz+=sign_z;
+                            eps-=diffy;
+                        }
+                        SurfacePoint(strx,stry,strz);
+                    }
+                }
+                else
+                {
+                     for(;strz!=point1.z-sign_z;)
+                    {
+                        strz+=sign_z;
+                        eps+=diffy;
+                        if((eps<<1)>=diffz)
+                        {
+                            stry+=sign_y;
+                            eps-=diffz;
+                        }
+                        SurfacePoint(strx,stry,strz);
+                    }
+                }
+            }
+            break;
+        case 2:
+            {
+                if(diffx>=diffz)
+                {
+                    for(;strx!=point1.x-sign_x;)
+                    {
+                        strx+=sign_x;
+                        eps+=diffz;
+                        if((eps<<1)>=diffx)
+                        {
+                            strz+=sign_z;
+                            eps-=diffx;
+                        }
+                        SurfacePoint(strx,stry,strz);
+                    }
+                }
+                else
+                {
+                     for(;strz!=point1.z-sign_z;)
+                    {
+                        strz+=sign_z;
+                        eps+=diffx;
+                        if((eps<<1)>=diffz)
+                        {
+                            strx+=sign_x;
+                            eps-=diffz;
+                        }
+                        SurfacePoint(strx,stry,strz);
+                    }
+                }
+            }
+            break;
+        case 3:
+            {
+                if(diffx>=diffy)
+                {
+                    for(;strx!=point1.x-sign_x;)
+                    {
+                        strx+=sign_x;
+                        eps+=diffy;
+                        if((eps<<1)>=diffx)
+                        {
+                            stry+=sign_y;
+                            eps-=diffx;
+                        }
+                        SurfacePoint(strx,stry,strz);
+                    }
+                }
+                else
+                {
+                     for(;stry!=point1.y-sign_y;)
+                    {
+                        stry+=sign_y;
+                        eps+=diffx;
+                        if((eps<<1)>=diffy)
+                        {
+                            strx+=sign_x;
+                            eps-=diffy;
+                        }
+                        SurfacePoint(strx,stry,strz);
+                    }
+                }
+            }
+            break;
+        default:
+            cout<<"error occured in ParallelToSurfaceEdge_Bresenham"<<endl;
+            break;
+    }
+}
+
+void Voxelization::GeneralLocationEdge_Bresenham(OctreePoint point1, OctreePoint point2)
+{
+    int diffx = point1.x-point2.x;
+    int diffy = point1.y-point2.y;
+    int diffz = point1.z-point2.z;
+    int sign_x = diffx>0?1:-1;
+    int sign_y = diffy>0?1:-1;
+    int sign_z = diffz>0?1:-1;
+    unsigned int strx = point2.x;
+    unsigned int stry = point2.y;
+    unsigned int strz = point2.z;
+    int epsx = 0; //eps is cumulative error
+    int epsy = 0; //eps is cumulative error
+    int epsz = 0; //eps is cumulative error
+    diffx = abs(diffx);
+    diffy = abs(diffy);
+    diffz = abs(diffz); //can use sign to judge positive and negative
+    int diffmax = max(max(diffx,diffy),diffz);
+    if(diffmax==diffx)
+    {
+        for(;strx!=point1.x-sign_x;)
+        {
+            strx+=sign_x;
+            epsy+=diffy;
+            epsz+=diffz;
+            if((epsy<<1)>=diffx)
+            {
+                stry+=sign_y;
+                epsy-=diffx;
+            }
+            if((epsz<<1)>=diffx)
+            {
+                strz+=sign_z;
+                epsz-=diffx;
+            }
+            SurfacePoint(strx,stry,strz);
+        }
+    }
+    else if(diffmax==diffy)
+    {
+        for(;stry!=point1.y-sign_y;)
+        {
+            stry+=sign_y;
+            epsx+=diffx;
+            epsz+=diffz;
+            if((epsx<<1)>=diffy)
+            {
+                strx+=sign_x;
+                epsx-=diffy;
+            }
+            if((epsz<<1)>=diffy)
+            {
+                strz+=sign_z;
+                epsz-=diffy;
+            }
+            SurfacePoint(strx,stry,strz);
+        }
+    }
+    else 
+    {
+        for(;strz!=point1.z-sign_z;)
+        {
+            strz+=sign_z;
+            epsx+=diffx;
+            epsy+=diffy;
+            if((epsx<<1)>=diffz)
+            {
+                strx+=sign_x;
+                epsx-=diffz;
+            }
+            if((epsy<<1)>=diffz)
+            {
+                stry+=sign_y;
+                epsy-=diffz;
+            }
+            SurfacePoint(strx,stry,strz);
+        }
     }
 }

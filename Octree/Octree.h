@@ -11,7 +11,7 @@ using namespace std;
 class OctreePoint
 {
     public:
-        OctreePoint(float _x,float _y,float _z):x(_x),y(_y),z(_z){}
+        OctreePoint(unsigned int _x,unsigned int _y,unsigned int _z):x(_x),y(_y),z(_z){}
         OctreePoint(const OctreePoint& copy)
         {
             x=copy.x;
@@ -21,9 +21,9 @@ class OctreePoint
         friend class Octree;
         friend class Voxelization;
     private:
-        float x;
-        float y;
-        float z;
+        unsigned int x;
+        unsigned int y;
+        unsigned int z;
 };
 
 class OctreeNode

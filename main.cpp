@@ -18,8 +18,8 @@ void drawSTL(void)
     p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
     p.drawPatch();
     //    p.drawAABB();
-        glTranslatef(p.xmin(),p.ymin(),p.zmin());
-        glScalef((p.xmax()-p.xmin())/pow(2,depth-1),(p.ymax()-p.ymin())/pow(2,depth-1),(p.zmax()-p.zmin())/pow(2,depth-1));
+    glTranslatef(p.xmin(),p.ymin(),p.zmin());
+    glScalef((p.xmax()-p.xmin())/pow(2,depth-1),(p.ymax()-p.ymin())/pow(2,depth-1),(p.zmax()-p.zmin())/pow(2,depth-1));
     tree.Traverse();
     //	p.drawsliceequalllayers(30);
     //p.drawslicefacet();
@@ -71,6 +71,8 @@ int main(int argc, char *argv[])
     tree.GetExtremum(p.xmax(),p.xmin(),p.ymax(),p.ymin(),p.zmax(),p.zmin());
     tree.MakeOctree(depth);
     tree.PointToVoxel(p.m_VectorPoint);
+    tree.EdgeToVoxel(p.m_VectorEdge,p.m_VectorPoint);
+    tree.FacetToVoxel(p.m_VectorFacet, p.m_VectorPoint);
 
     WinWidth = 800;
     WinHeight = 800;

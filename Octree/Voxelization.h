@@ -24,11 +24,21 @@ class Voxelization:public Octree
         void GetExtremum(float x_max,float x_min,float y_max,float y_min,float z_max,float z_min);
         //transform the vertex positions of a primitive into a regular eulerian grid
         void PointToVoxel(vector<CVertex> VectorPoint);
+        //transform the edges of a primitive into a regular eulerian grid
+        void EdgeToVoxel(vector<CEdge> VectorEdge, vector<CVertex> VectorPoint);
+        //transform the edegs and facet of a primitive into a regular eulerian grid
+        void FacetToVoxel(vector<CFacet> VectorFacet, vector<CVertex> VectorPoint);
         void SurfacePoint(unsigned int x,unsigned int y,unsigned int z);
-        float ChangeCoordinate(float coordinate,float max,float min);
+        unsigned int ChangeCoordinate(float coordinate,float max,float min);
         //to check if the num is at the max vertex
-        float CheckPoint(float num);
+        unsigned int CheckNum(unsigned int num);
+        //Change the Edge on the part to voxel by using Bresenham
+        void EdgeChange_Bresenham(OctreePoint point1, OctreePoint point2);
+        void PerpendicularToSurfaceEdge(OctreePoint point1,OctreePoint point2, int serial);
+        void ParallelToSurfaceEdge_Bresenham(OctreePoint point1, OctreePoint point2, int serial);
+        void GeneralLocationEdge_Bresenham(OctreePoint point1, OctreePoint point2);
     private:
+        vector<OctreePoint> opoint;
         float xmax,xmin,ymax,ymin,zmax,zmin;
 };
 
