@@ -1,6 +1,11 @@
 #include "Octree.h"
 using namespace std;
 
+bool OctreePoint:: operator==(const OctreePoint &point)const
+{
+    return ((x==point.x)&&(y==point.y)&&(z==point.z));
+}
+
 void Octree::MakeOctree(int height)
 {
     if(max_height<height)

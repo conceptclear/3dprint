@@ -18,6 +18,7 @@ class OctreePoint
             y=copy.y;
             z=copy.z;
         }
+        bool operator==(const OctreePoint &point)const;
         friend class Octree;
         friend class Voxelization;
     private:

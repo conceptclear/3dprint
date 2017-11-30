@@ -123,6 +123,8 @@ void Voxelization::FacetToVoxel(vector<CFacet> VectorFacet, vector<CVertex> Vect
         OctreePoint point1(strx1,stry1,strz1);
         OctreePoint point2(strx2,stry2,strz2);
         OctreePoint point3(strx3,stry3,strz3);
+        if((point1==point2)||(point2==point3)||(point1==point3))
+            return;
         //get the normal of the facet
         float Normal_x=VectorFacet[i].m_Normal[0];
         float Normal_y=VectorFacet[i].m_Normal[1];
@@ -130,6 +132,12 @@ void Voxelization::FacetToVoxel(vector<CFacet> VectorFacet, vector<CVertex> Vect
         //the function of this facet can be given by:
         //Normal_x*(x-point1.x)+Normal_y*(y-point1.y)+Normal_z*(z-point1.z)=0
         //z=point1.z+Normal_x/Normal_z*(x-point1.x)+Normal_y/Normal_z*(y-point1.y)
+        if(Normal_x==1)
+            ParallelToSurfaceFacet(point1,point2,point3,1);
+        else if(Normal_y==1)
+            ParallelToSurfaceFacet(point1,point2,point3,2);
+        else if(Normal_z==1)
+            ParallelToSurfaceFacet(point1,point2,point3,3);
     }
 }
 
@@ -393,4 +401,8 @@ void Voxelization::GeneralLocationEdge_Bresenham(OctreePoint point1, OctreePoint
             SurfacePoint(strx,stry,strz);
         }
     }
+}
+        
+void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial)
+{
 }

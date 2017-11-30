@@ -34,9 +34,13 @@ class Voxelization:public Octree
         unsigned int CheckNum(unsigned int num);
         //Change the Edge on the part to voxel by using Bresenham
         void EdgeChange_Bresenham(OctreePoint point1, OctreePoint point2);
+        //edge perpendicular to surface ,which means only one coordinate will change
         void PerpendicularToSurfaceEdge(OctreePoint point1,OctreePoint point2, int serial);
+        //edge parallel to surface ,which means only two coordinate will change
         void ParallelToSurfaceEdge_Bresenham(OctreePoint point1, OctreePoint point2, int serial);
         void GeneralLocationEdge_Bresenham(OctreePoint point1, OctreePoint point2);
+        //facet parallel to surface, which means all the voxels will have a same coordinate
+        void ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial);
     private:
         vector<OctreePoint> opoint;
         float xmax,xmin,ymax,ymin,zmax,zmin;
