@@ -132,11 +132,11 @@ void Voxelization::FacetToVoxel(vector<CFacet> VectorFacet, vector<CVertex> Vect
         //the function of this facet can be given by:
         //Normal_x*(x-point1.x)+Normal_y*(y-point1.y)+Normal_z*(z-point1.z)=0
         //z=point1.z+Normal_x/Normal_z*(x-point1.x)+Normal_y/Normal_z*(y-point1.y)
-        if(Normal_x==1)
+        if(abs(Normal_x)==1)
             ParallelToSurfaceFacet(point1,point2,point3,1);
-        else if(Normal_y==1)
+        else if(abs(Normal_y)==1)
             ParallelToSurfaceFacet(point1,point2,point3,2);
-        else if(Normal_z==1)
+        else if(abs(Normal_z)==1)
             ParallelToSurfaceFacet(point1,point2,point3,3);
     }
 }
@@ -406,6 +406,7 @@ void Voxelization::GeneralLocationEdge_Bresenham(OctreePoint point1, OctreePoint
 void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial)
 {
     opoint2D.clear();
+    strpoint2d.clear();
     switch(serial)
     {
         case 1:
@@ -415,7 +416,17 @@ void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2
                 Point2D point2d3(point3.y,point3.z);
                 Bresenham2D(point2d1,point2d2);
                 Bresenham2D(point2d1,point2d3);
-                Bresenham2D(point2d1,point2d3);
+                Bresenham2D(point2d2,point2d3);
+                //the centroid of the triangle must be in this triangle
+                //so the centroid can be used to set as the seed
+                Point2D centroid((point1.y+point2.y+point3.y)/3,(point1.z+point2.z+point3.z)/3);
+                //due to the rounding error,centroid could be out of the triangle
+                //so we should check it whether it is in the triangle
+                FloodSeedFill2D(centroid);
+                for(unsigned long i=0;i<strpoint2d.size();i++)
+                {
+                    SurfacePoint(point1.x,strpoint2d[i].x,strpoint2d[i].y);
+                }
             }
             break;
         case 2:
@@ -425,7 +436,15 @@ void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2
                 Point2D point2d3(point3.x,point3.z);
                 Bresenham2D(point2d1,point2d2);
                 Bresenham2D(point2d1,point2d3);
-                Bresenham2D(point2d1,point2d3);
+                Bresenham2D(point2d2,point2d3);
+                //the centroid of the triangle must be in this triangle
+                //so the centroid can be used to set as the seed
+                Point2D centroid((point1.x+point2.x+point3.x)/3,(point1.z+point2.z+point3.z)/3);
+                FloodSeedFill2D(centroid);
+                for(unsigned long i=0;i<strpoint2d.size();i++)
+                {
+                    SurfacePoint(strpoint2d[i].x,point1.y,strpoint2d[i].y);
+                }
             }
             break;
         case 3:
@@ -435,7 +454,15 @@ void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2
                 Point2D point2d3(point3.x,point3.y);
                 Bresenham2D(point2d1,point2d2);
                 Bresenham2D(point2d1,point2d3);
-                Bresenham2D(point2d1,point2d3);
+                Bresenham2D(point2d2,point2d3);
+                //the centroid of the triangle must be in this triangle
+                //so the centroid can be used to set as the seed
+                Point2D centroid((point1.x+point2.x+point3.x)/3,(point1.y+point2.y+point3.y)/3);
+                FloodSeedFill2D(centroid);
+                for(unsigned long i=0;i<strpoint2d.size();i++)
+                {
+                    SurfacePoint(strpoint2d[i].x,strpoint2d[i].y,point1.z);
+                }
             }
             break;
         default:
@@ -446,6 +473,8 @@ void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2
 
 void Voxelization::Bresenham2D(Point2D pt2d1, Point2D pt2d2)
 {
+    opoint2D.insert(pt2d1);
+    opoint2D.insert(pt2d2);
     int diffx = pt2d1.x-pt2d2.x;
     int diffy = pt2d1.y-pt2d2.y;
     int sign_x = diffx>0?1:-1;
@@ -470,7 +499,7 @@ void Voxelization::Bresenham2D(Point2D pt2d1, Point2D pt2d2)
     }
     else
     {
-        for(;str2d.y!=pt2d2.y-sign_y;)
+        for(;str2d.y!=pt2d1.y-sign_y;)
         {
             str2d.y+=sign_y;
             eps+=diffx;
@@ -484,3 +513,18 @@ void Voxelization::Bresenham2D(Point2D pt2d1, Point2D pt2d2)
     }
 }
  
+void Voxelization::FloodSeedFill2D(Point2D point2d)
+{
+    if(opoint2D.find(point2d)==opoint2D.end())
+    {
+        int x[4]={-1,0,1,0};
+        int y[4]={0,1,0,-1};
+        strpoint2d.push_back(point2d);
+        opoint2D.insert(point2d);
+        for(int i=0;i<4;i++)
+        {
+            Point2D fpoint(point2d.x+x[i],point2d.y+y[i]);
+            FloodSeedFill2D(fpoint);
+        }
+    }
+}

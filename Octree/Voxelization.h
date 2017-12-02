@@ -44,9 +44,11 @@ class Voxelization:public Octree
         void ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial);
         //use 2D Bresenham to voxel the line
         void Bresenham2D(Point2D pt2d1, Point2D pt2d2);
+        //use floodseedfill to fill the 2dfacet
+        void FloodSeedFill2D(Point2D point2d);
     private:
-        vector<OctreePoint> opoint;
         float xmax,xmin,ymax,ymin,zmax,zmin;
-        set<Point2D> opoint2D;
+        set<Point2D> opoint2D; //to save the point of the 2d Bresenham line
+        vector<Point2D> strpoint2d; //to save the point filled by floodseedfill2d
 };
 

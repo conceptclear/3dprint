@@ -141,6 +141,13 @@ class Point2D
             else
                 return false;
         }
+        Point2D operator+(const Point2D &a)const
+        {
+            Point2D point(x,y);
+            point.x+=a.x;
+            point.y+=a.y;
+            return point;
+        }
         friend class Octree;
         friend class Voxelization;
     private:
