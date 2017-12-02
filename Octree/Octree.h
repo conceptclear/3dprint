@@ -34,9 +34,9 @@ class OctreeNode
     //use right hand spiral rules
     //define x as back and front direction, y as left and front direciton, z as top and bottom direction
     //as an example, Front_Left_Top means 101,ChangeToDecimal is 5. So, the orderstr in this depth equals 5
-    friend class Octree;
-    friend class Voxelization;
     public:
+        friend class Octree;
+        friend class Voxelization;
         OctreeNode():
             Back_Left_Bottom(NULL),Back_Left_Top(NULL),
             Back_Right_Bottom(NULL),Back_Right_Top(NULL),
@@ -120,4 +120,30 @@ class Octree
    protected:
         OctreeNode *root;
         int max_height;
+};
+
+class Point2D
+{
+    public:
+        Point2D(unsigned int _x=0,unsigned int _y=0):x(_x),y(_y){}
+        ~Point2D(){}
+        bool operator<(const Point2D &a)const
+        {
+            if(a.x<x)
+                return true;
+            else if(a.x==x)
+            {
+                if(a.y<y)
+                    return true;
+                else
+                    return false;
+            }
+            else
+                return false;
+        }
+        friend class Octree;
+        friend class Voxelization;
+    private:
+        unsigned int x;
+        unsigned int y;
 };

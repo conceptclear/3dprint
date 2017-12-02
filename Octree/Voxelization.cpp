@@ -405,4 +405,82 @@ void Voxelization::GeneralLocationEdge_Bresenham(OctreePoint point1, OctreePoint
         
 void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial)
 {
+    opoint2D.clear();
+    switch(serial)
+    {
+        case 1:
+            {
+                Point2D point2d1(point1.y,point1.z);
+                Point2D point2d2(point2.y,point2.z);
+                Point2D point2d3(point3.y,point3.z);
+                Bresenham2D(point2d1,point2d2);
+                Bresenham2D(point2d1,point2d3);
+                Bresenham2D(point2d1,point2d3);
+            }
+            break;
+        case 2:
+            {
+                Point2D point2d1(point1.x,point1.z);
+                Point2D point2d2(point2.x,point2.z);
+                Point2D point2d3(point3.x,point3.z);
+                Bresenham2D(point2d1,point2d2);
+                Bresenham2D(point2d1,point2d3);
+                Bresenham2D(point2d1,point2d3);
+            }
+            break;
+        case 3:
+            {
+                Point2D point2d1(point1.x,point1.y);
+                Point2D point2d2(point2.x,point2.y);
+                Point2D point2d3(point3.x,point3.y);
+                Bresenham2D(point2d1,point2d2);
+                Bresenham2D(point2d1,point2d3);
+                Bresenham2D(point2d1,point2d3);
+            }
+            break;
+        default:
+            cout<<"error occured in ParallelToSurfaceFacet"<<endl;
+            break;
+    }
 }
+
+void Voxelization::Bresenham2D(Point2D pt2d1, Point2D pt2d2)
+{
+    int diffx = pt2d1.x-pt2d2.x;
+    int diffy = pt2d1.y-pt2d2.y;
+    int sign_x = diffx>0?1:-1;
+    int sign_y = diffy>0?1:-1;
+    Point2D str2d(pt2d2.x,pt2d2.y);
+    int eps = 0; //eps is cumulative error
+    diffx = abs(diffx);
+    diffy = abs(diffy);//can use sign to judge positive and negative
+    if(diffx>=diffy)
+    {
+        for(;str2d.x!=pt2d1.x-sign_x;)
+        {
+            str2d.x+=sign_x;
+            eps+=diffy;
+            if((eps<<1)>=diffx)
+            {
+                str2d.y+=sign_y;
+                eps-=diffx;
+            }
+            opoint2D.insert(str2d);
+        }
+    }
+    else
+    {
+        for(;str2d.y!=pt2d2.y-sign_y;)
+        {
+            str2d.y+=sign_y;
+            eps+=diffx;
+            if((eps<<1)>=diffy)
+            {
+                str2d.x+=sign_x;
+                eps-=diffy;
+            }
+            opoint2D.insert(str2d);
+        }
+    }
+}
+ 

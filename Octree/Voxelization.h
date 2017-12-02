@@ -2,6 +2,7 @@
 #include "Octree.h"
 #include <vector>
 #include <cmath>
+#include <set>
 
 class Voxelization:public Octree
 {
@@ -41,8 +42,11 @@ class Voxelization:public Octree
         void GeneralLocationEdge_Bresenham(OctreePoint point1, OctreePoint point2);
         //facet parallel to surface, which means all the voxels will have a same coordinate
         void ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial);
+        //use 2D Bresenham to voxel the line
+        void Bresenham2D(Point2D pt2d1, Point2D pt2d2);
     private:
         vector<OctreePoint> opoint;
         float xmax,xmin,ymax,ymin,zmax,zmin;
+        set<Point2D> opoint2D;
 };
 
