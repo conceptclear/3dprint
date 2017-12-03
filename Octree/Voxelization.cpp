@@ -411,17 +411,17 @@ void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2
     {
         case 1:
             {
-                Point2D point2d1(point1.y,point1.z);
-                Point2D point2d2(point2.y,point2.z);
-                Point2D point2d3(point3.y,point3.z);
-                Bresenham2D(point2d1,point2d2);
-                Bresenham2D(point2d1,point2d3);
-                Bresenham2D(point2d2,point2d3);
                 //the centroid of the triangle must be in this triangle
                 //so the centroid can be used to set as the seed
                 Point2D centroid((point1.y+point2.y+point3.y)/3,(point1.z+point2.z+point3.z)/3);
+                Point2D point2d1(point1.y,point1.z);
+                Point2D point2d2(point2.y,point2.z);
+                Point2D point2d3(point3.y,point3.z);
                 //due to the rounding error,centroid could be out of the triangle
                 //so we should check it whether it is in the triangle
+                Bresenham2D(point2d1,point2d2);
+                Bresenham2D(point2d1,point2d3);
+                Bresenham2D(point2d2,point2d3);
                 FloodSeedFill2D(centroid);
                 for(unsigned long i=0;i<strpoint2d.size();i++)
                 {
@@ -431,15 +431,17 @@ void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2
             break;
         case 2:
             {
-                Point2D point2d1(point1.x,point1.z);
-                Point2D point2d2(point2.x,point2.z);
-                Point2D point2d3(point3.x,point3.z);
-                Bresenham2D(point2d1,point2d2);
-                Bresenham2D(point2d1,point2d3);
-                Bresenham2D(point2d2,point2d3);
                 //the centroid of the triangle must be in this triangle
                 //so the centroid can be used to set as the seed
                 Point2D centroid((point1.x+point2.x+point3.x)/3,(point1.z+point2.z+point3.z)/3);
+                Point2D point2d1(point1.x,point1.z);
+                Point2D point2d2(point2.x,point2.z);
+                Point2D point2d3(point3.x,point3.z);
+                //due to the rounding error,centroid could be out of the triangle
+                //so we should check it whether it is in the triangle
+                Bresenham2D(point2d1,point2d2);
+                Bresenham2D(point2d1,point2d3);
+                Bresenham2D(point2d2,point2d3);
                 FloodSeedFill2D(centroid);
                 for(unsigned long i=0;i<strpoint2d.size();i++)
                 {
@@ -449,15 +451,17 @@ void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2
             break;
         case 3:
             {
-                Point2D point2d1(point1.x,point1.y);
-                Point2D point2d2(point2.x,point2.y);
-                Point2D point2d3(point3.x,point3.y);
-                Bresenham2D(point2d1,point2d2);
-                Bresenham2D(point2d1,point2d3);
-                Bresenham2D(point2d2,point2d3);
                 //the centroid of the triangle must be in this triangle
                 //so the centroid can be used to set as the seed
                 Point2D centroid((point1.x+point2.x+point3.x)/3,(point1.y+point2.y+point3.y)/3);
+                Point2D point2d1(point1.x,point1.y);
+                Point2D point2d2(point2.x,point2.y);
+                Point2D point2d3(point3.x,point3.y);
+                //due to the rounding error,centroid could be out of the triangle
+                //so we should check it whether it is in the triangle
+                Bresenham2D(point2d1,point2d2);
+                Bresenham2D(point2d1,point2d3);
+                Bresenham2D(point2d2,point2d3);
                 FloodSeedFill2D(centroid);
                 for(unsigned long i=0;i<strpoint2d.size();i++)
                 {
