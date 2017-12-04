@@ -143,10 +143,11 @@ class Point2D
         }
         Point2D operator+(const Point2D &a)const
         {
-            Point2D point(x,y);
-            point.x+=a.x;
-            point.y+=a.y;
-            return point;
+            return Point2D(x+a.x,y+a.y);
+        }
+        Point2D operator-(const Point2D &a)const
+        {
+            return Point2D(x-a.x,y-a.y);
         }
         friend class Octree;
         friend class Voxelization;

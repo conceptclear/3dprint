@@ -13,6 +13,9 @@ void Voxelization::GetExtremum(float x_max,float x_min,float y_max,float y_min,f
 
 void Voxelization::SurfacePoint(unsigned int x, unsigned int y, unsigned int z)
 {
+    x=CheckNum(x);
+    y=CheckNum(y);
+    z=CheckNum(z);
     OctreeNode* node = root;
     int x_direction; 
     int y_direction; 
@@ -65,8 +68,7 @@ unsigned int Voxelization::ChangeCoordinate(float coordinate,float max,float min
 {
     unsigned int data = (coordinate-min)*pow(2,max_height-1)/(max-min);
     //    cout<<data<<endl;
-    unsigned int output = CheckNum(data);
-    return output;
+    return data;
 }
 
 unsigned int Voxelization::CheckNum(unsigned int num)
@@ -132,12 +134,25 @@ void Voxelization::FacetToVoxel(vector<CFacet> VectorFacet, vector<CVertex> Vect
         //the function of this facet can be given by:
         //Normal_x*(x-point1.x)+Normal_y*(y-point1.y)+Normal_z*(z-point1.z)=0
         //z=point1.z+Normal_x/Normal_z*(x-point1.x)+Normal_y/Normal_z*(y-point1.y)
-        if(abs(Normal_x)==1)
+        //due to the accuracy of the floating point, we use minus to check
+        if(abs(abs(Normal_x)-1)<1e-6)
             ParallelToSurfaceFacet(point1,point2,point3,1);
-        else if(abs(Normal_y)==1)
+        else if(abs(abs(Normal_y)-1)<1e-6)
             ParallelToSurfaceFacet(point1,point2,point3,2);
-        else if(abs(Normal_z)==1)
+        else if(abs(abs(Normal_z)-1)<1e-6)
             ParallelToSurfaceFacet(point1,point2,point3,3);
+        else if((abs(Normal_x)<1e-6)&&(abs(Normal_y)>=abs(Normal_z)))
+            PerpendicularToSurfaceFacet(point1,point2,point3,1,2);
+        else if((abs(Normal_x)<1e-6)&&(abs(Normal_y)<abs(Normal_z)))
+            PerpendicularToSurfaceFacet(point1,point2,point3,1,3);
+        else if((abs(Normal_y)<1e-6)&&(abs(Normal_x)>=abs(Normal_z)))
+            PerpendicularToSurfaceFacet(point1,point2,point3,2,1);
+        else if((abs(Normal_y)<1e-6)&&(abs(Normal_x)<abs(Normal_z)))
+            PerpendicularToSurfaceFacet(point1,point2,point3,2,3);
+        else if((abs(Normal_z)<1e-6)&&(abs(Normal_x)>=abs(Normal_y)))
+            PerpendicularToSurfaceFacet(point1,point2,point3,3,1);
+        else if((abs(Normal_z)<1e-6)&&(abs(Normal_x)<abs(Normal_y)))
+            PerpendicularToSurfaceFacet(point1,point2,point3,3,2);
     }
 }
 
@@ -406,7 +421,7 @@ void Voxelization::GeneralLocationEdge_Bresenham(OctreePoint point1, OctreePoint
 void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial)
 {
     opoint2D.clear();
-    strpoint2d.clear();
+    set<Point2D>::iterator it;
     switch(serial)
     {
         case 1:
@@ -419,13 +434,15 @@ void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2
                 Point2D point2d3(point3.y,point3.z);
                 //due to the rounding error,centroid could be out of the triangle
                 //so we should check it whether it is in the triangle
-                Bresenham2D(point2d1,point2d2);
-                Bresenham2D(point2d1,point2d3);
-                Bresenham2D(point2d2,point2d3);
+                if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
+                    break;
+                SuperCoverLine2D(point2d1,point2d2);
+                SuperCoverLine2D(point2d1,point2d3);
+                SuperCoverLine2D(point2d2,point2d3);
                 FloodSeedFill2D(centroid);
-                for(unsigned long i=0;i<strpoint2d.size();i++)
+                for(it=opoint2D.begin();it!=opoint2D.end();it++)
                 {
-                    SurfacePoint(point1.x,strpoint2d[i].x,strpoint2d[i].y);
+                    SurfacePoint(point1.x,it->x,it->y);
                 }
             }
             break;
@@ -439,13 +456,15 @@ void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2
                 Point2D point2d3(point3.x,point3.z);
                 //due to the rounding error,centroid could be out of the triangle
                 //so we should check it whether it is in the triangle
-                Bresenham2D(point2d1,point2d2);
-                Bresenham2D(point2d1,point2d3);
-                Bresenham2D(point2d2,point2d3);
+                if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
+                    break;
+                SuperCoverLine2D(point2d1,point2d2);
+                SuperCoverLine2D(point2d1,point2d3);
+                SuperCoverLine2D(point2d2,point2d3);
                 FloodSeedFill2D(centroid);
-                for(unsigned long i=0;i<strpoint2d.size();i++)
+                for(it=opoint2D.begin();it!=opoint2D.end();it++)
                 {
-                    SurfacePoint(strpoint2d[i].x,point1.y,strpoint2d[i].y);
+                    SurfacePoint(it->x,point1.y,it->y);
                 }
             }
             break;
@@ -459,18 +478,220 @@ void Voxelization::ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2
                 Point2D point2d3(point3.x,point3.y);
                 //due to the rounding error,centroid could be out of the triangle
                 //so we should check it whether it is in the triangle
-                Bresenham2D(point2d1,point2d2);
-                Bresenham2D(point2d1,point2d3);
-                Bresenham2D(point2d2,point2d3);
+                if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
+                    break;
+                SuperCoverLine2D(point2d1,point2d2);
+                SuperCoverLine2D(point2d1,point2d3);
+                SuperCoverLine2D(point2d2,point2d3);
                 FloodSeedFill2D(centroid);
-                for(unsigned long i=0;i<strpoint2d.size();i++)
+                for(it=opoint2D.begin();it!=opoint2D.end();it++)
                 {
-                    SurfacePoint(strpoint2d[i].x,strpoint2d[i].y,point1.z);
+                    SurfacePoint(it->x,it->y,point1.z);
                 }
             }
             break;
         default:
             cout<<"error occured in ParallelToSurfaceFacet"<<endl;
+            break;
+    }
+}
+
+void Voxelization::PerpendicularToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial, int max_normal)
+{
+    opoint2D.clear();
+    set<Point2D>::iterator it;
+    float k;
+    int diffx;
+    int diffy;
+    int diffz;
+    switch(serial)
+    {
+        case 1:
+            {
+                if(max_normal==2)
+                {
+                    //the centroid of the triangle must be in this triangle
+                    //so the centroid can be used to set as the seed
+                    Point2D centroid((point1.x+point2.x+point3.x)/3,(point1.z+point2.z+point3.z)/3);
+                    Point2D point2d1(point1.x,point1.z);
+                    Point2D point2d2(point2.x,point2.z);
+                    Point2D point2d3(point3.x,point3.z);
+                    //due to the rounding error,centroid could be out of the triangle
+                    //so we should check it whether it is in the triangle
+                    if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
+                        break;
+                    SuperCoverLine2D(point2d1,point2d2);
+                    SuperCoverLine2D(point2d1,point2d3);
+                    SuperCoverLine2D(point2d2,point2d3);
+                    FloodSeedFill2D(centroid);
+                    if(point2.z-point1.z==0)
+                        k=1.0*(point3.y-point1.y)/(point3.z-point1.z);
+                    else
+                        k=1.0*(point2.y-point1.y)/(point2.z-point1.z);
+                    //y=k*(z-z1)+y1
+                    for(it=opoint2D.begin();it!=opoint2D.end();it++)
+                    {
+                        SurfacePoint(it->x,(unsigned int)(k*(it->y-point1.z)+point1.y),it->y);
+                    }
+                }
+                else
+                {
+                    //the centroid of the triangle must be in this triangle
+                    //so the centroid can be used to set as the seed
+                    Point2D centroid((point1.x+point2.x+point3.x)/3,(point1.y+point2.y+point3.y)/3);
+                    Point2D point2d1(point1.x,point1.y);
+                    Point2D point2d2(point2.x,point2.y);
+                    Point2D point2d3(point3.x,point3.y);
+                    //due to the rounding error,centroid could be out of the triangle
+                    //so we should check it whether it is in the triangle
+                    if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
+                        break;
+                    SuperCoverLine2D(point2d1,point2d2);
+                    SuperCoverLine2D(point2d1,point2d3);
+                    SuperCoverLine2D(point2d2,point2d3);
+                    FloodSeedFill2D(centroid);
+                    if(point2.y-point1.y==0)
+                        k=1.0*(point3.z-point1.z)/(point3.y-point1.y);
+                    else
+                        k=1.0*(point2.z-point1.z)/(point2.y-point1.y);
+                    //z=k*(y-y1)+z1
+                    for(it=opoint2D.begin();it!=opoint2D.end();it++)
+                    {
+                        SurfacePoint(it->x,it->y,(unsigned int)(k*(it->y-point1.y)+point1.z));
+                    }
+                }
+            }
+            break;
+        case 2:
+            {
+                if(max_normal==1)
+                {
+                    //the centroid of the triangle must be in this triangle
+                    //so the centroid can be used to set as the seed
+                    Point2D centroid((point1.y+point2.y+point3.y)/3,(point1.z+point2.z+point3.z)/3);
+                    Point2D point2d1(point1.y,point1.z);
+                    Point2D point2d2(point2.y,point2.z);
+                    Point2D point2d3(point3.y,point3.z);
+                    //due to the rounding error,centroid could be out of the triangle
+                    //so we should check it whether it is in the triangle
+                    if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
+                        break;
+                    SuperCoverLine2D(point2d1,point2d2);
+                    SuperCoverLine2D(point2d1,point2d3);
+                    SuperCoverLine2D(point2d2,point2d3);
+                    FloodSeedFill2D(centroid);
+                    if(point2.z-point1.z==0)
+                        k=1.0*(point3.x-point1.x)/(point3.z-point1.z);
+                    else
+                        k=1.0*(point2.x-point1.x)/(point2.z-point1.z);
+                    //x=k*(z-z1)+x1
+                    for(it=opoint2D.begin();it!=opoint2D.end();it++)
+                    {
+                        SurfacePoint((unsigned int)(k*(it->y-point1.z)+point1.x),it->x,it->y);
+                    }
+                }
+                else
+                {
+                    //the centroid of the triangle must be in this triangle
+                    //so the centroid can be used to set as the seed
+                    Point2D centroid((point1.x+point2.x+point3.x)/3,(point1.y+point2.y+point3.y)/3);
+                    Point2D point2d1(point1.x,point1.y);
+                    Point2D point2d2(point2.x,point2.y);
+                    Point2D point2d3(point3.x,point3.y);
+                    //due to the rounding error,centroid could be out of the triangle
+                    //so we should check it whether it is in the triangle
+                    if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
+                        break;
+                    SuperCoverLine2D(point2d1,point2d2);
+                    SuperCoverLine2D(point2d1,point2d3);
+                    SuperCoverLine2D(point2d2,point2d3);
+                    FloodSeedFill2D(centroid);
+                    if(point2.x-point1.x==0)
+                        k=1.0*(point3.z-point1.z)/(point3.x-point1.x);
+                    else
+                        k=1.0*(point2.z-point1.z)/(point2.x-point1.x);
+                    //z=k*(x-x1)+z1
+                    for(it=opoint2D.begin();it!=opoint2D.end();it++)
+                    {
+                        SurfacePoint(it->x,it->y,(unsigned int)(k*(it->x-point1.x)+point1.z));
+                    }
+                }
+            }
+            break;
+        case 3:
+            {
+                if(max_normal==1)
+                {
+                    //the centroid of the triangle must be in this triangle
+                    //so the centroid can be used to set as the seed
+                    Point2D centroid((point1.y+point2.y+point3.y)/3,(point1.z+point2.z+point3.z)/3);
+                    Point2D point2d1(point1.y,point1.z);
+                    Point2D point2d2(point2.y,point2.z);
+                    Point2D point2d3(point3.y,point3.z);
+                    //due to the rounding error,centroid could be out of the triangle
+                    //so we should check it whether it is in the triangle
+                    if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
+                        break;
+                    SuperCoverLine2D(point2d1,point2d2);
+                    SuperCoverLine2D(point2d1,point2d3);
+                    SuperCoverLine2D(point2d2,point2d3);
+                    FloodSeedFill2D(centroid);
+                    if(point2.y-point1.y==0)
+                    {
+                        diffx=point3.x-point1.x;
+                        diffy=point3.y-point1.y;
+                        k=1.0*diffx/diffy;
+                    }
+                    else
+                    {
+                        diffx=point2.x-point1.x;
+                        diffy=point2.y-point1.y;
+                        k=1.0*diffx/diffy;
+                    }
+                    //x=k*(y-y1)+x1
+                    for(it=opoint2D.begin();it!=opoint2D.end();it++)
+                    {
+                        SurfacePoint((k*(it->x-point1.y)+point1.x),it->x,it->y);
+                    }
+                }
+                else
+                {
+                    //the centroid of the triangle must be in this triangle
+                    //so the centroid can be used to set as the seed
+                    Point2D centroid((point1.x+point2.x+point3.x)/3,(point1.z+point2.z+point3.z)/3);
+                    Point2D point2d1(point1.x,point1.z);
+                    Point2D point2d2(point2.x,point2.z);
+                    Point2D point2d3(point3.x,point3.z);
+                    //due to the rounding error,centroid could be out of the triangle
+                    //so we should check it whether it is in the triangle
+                    if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
+                        break;
+                    SuperCoverLine2D(point2d1,point2d2);
+                    SuperCoverLine2D(point2d1,point2d3);
+                    SuperCoverLine2D(point2d2,point2d3);
+                    FloodSeedFill2D(centroid);
+                    if(point2.x-point1.x==0)
+                    {
+                        diffy=point3.y-point1.y;
+                        diffx=point3.x-point1.x;
+                        k=1.0*diffy/diffx;
+                    }
+                    else
+                    {
+                        diffy=point2.y-point1.y;
+                        diffx=point2.x-point1.x;
+                        k=1.0*diffy/diffx;
+                    }
+                    //y=k*(x-x1)+y1
+                    for(it=opoint2D.begin();it!=opoint2D.end();it++)
+                    {
+                        SurfacePoint(it->x,(k*(it->x-point1.x)+point1.y),it->y);
+                    }
+                }
+            }
+            break;
+        default:
+            cout<<"error occured in PerpendicularToSurfaceFacet"<<endl;
             break;
     }
 }
@@ -516,6 +737,93 @@ void Voxelization::Bresenham2D(Point2D pt2d1, Point2D pt2d2)
         }
     }
 }
+
+void Voxelization::SuperCoverLine2D(Point2D pt2d1, Point2D pt2d2)
+{
+    opoint2D.insert(pt2d1);
+    opoint2D.insert(pt2d2);
+    int diffx = pt2d1.x-pt2d2.x;
+    int diffy = pt2d1.y-pt2d2.y;
+    int sign_x = diffx>0?1:-1;
+    int sign_y = diffy>0?1:-1;
+    Point2D str2d(pt2d2.x,pt2d2.y);
+    int eps = 0; //eps is cumulative error
+    int preeps = 0; //preeps is the previous value of the error variable
+    diffx = abs(diffx);
+    diffy = abs(diffy);//can use sign to judge positive and negative
+    int ddx = (diffx<<1);
+    int ddy = (diffy<<1);
+    if(diffx>=diffy)
+    {
+        preeps=eps=diffx;
+        for(;str2d.x!=pt2d1.x-sign_x;)
+        {
+            str2d.x+=sign_x;
+            eps+=ddy;
+            if(eps>ddx)
+            {
+                eps-=ddx;
+                if(eps+preeps<ddx)
+                {
+                    opoint2D.insert(str2d);
+                    str2d.y+=sign_y;
+                }
+                else if(eps+preeps>ddx)
+                {
+                    str2d.y+=sign_y;
+                    str2d.x-=sign_x;
+                    opoint2D.insert(str2d);
+                    str2d.x+=sign_x;
+                }
+                else
+                {
+                    opoint2D.insert(str2d);
+                    str2d.y+=sign_y;
+                    str2d.x-=sign_x;
+                    opoint2D.insert(str2d);
+                    str2d.x+=sign_x;
+                }
+            }
+            opoint2D.insert(str2d);
+            preeps = eps;
+        }
+    }
+    else
+    {
+        preeps=eps=diffy;
+        for(;str2d.y!=pt2d1.y-sign_y;)
+        {
+            str2d.y+=sign_y;
+            eps+=ddx;
+            if(eps>ddy)
+            {
+                eps-=ddy;
+                if(eps+preeps<ddy)
+                {
+                    opoint2D.insert(str2d);
+                    str2d.x+=sign_x;
+                }
+                else if(eps+preeps>ddx)
+                {
+                    str2d.x+=sign_x;
+                    str2d.y-=sign_y;
+                    opoint2D.insert(str2d);
+                    str2d.y+=sign_y;
+                }
+                else
+                {
+                    opoint2D.insert(str2d);
+                    str2d.x+=sign_x;
+                    str2d.y-=sign_y;
+                    opoint2D.insert(str2d);
+                    str2d.y+=sign_y;
+                }
+            }
+            opoint2D.insert(str2d);
+            preeps = eps;
+        }
+    }
+}
  
 void Voxelization::FloodSeedFill2D(Point2D point2d)
 {
@@ -523,7 +831,6 @@ void Voxelization::FloodSeedFill2D(Point2D point2d)
     {
         int x[4]={-1,0,1,0};
         int y[4]={0,1,0,-1};
-        strpoint2d.push_back(point2d);
         opoint2D.insert(point2d);
         for(int i=0;i<4;i++)
         {
@@ -531,4 +838,23 @@ void Voxelization::FloodSeedFill2D(Point2D point2d)
             FloodSeedFill2D(fpoint);
         }
     }
+}
+
+
+bool Voxelization::CheckTriangle(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3)
+{
+    return CheckSameSide(centroid,point2d1,point2d2,point2d3)&&CheckSameSide(centroid,point2d2,point2d3,point2d1)&&CheckSameSide(centroid,point2d3,point2d1,point2d2);
+}
+
+
+bool Voxelization::CheckSameSide(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3)
+{
+    Point2D vec1 = point2d2-point2d1;
+    Point2D vec2 = point2d3-point2d1;
+    Point2D vecc = centroid-point2d1;
+
+    float f1 = vec1.x*vec2.y-vec1.y*vec2.x;
+    float f2 = vec1.x*vecc.y-vec1.y*vecc.x;
+
+    return f1*f2>=0;
 }

@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     tree.GetExtremum(p.xmax(),p.xmin(),p.ymax(),p.ymin(),p.zmax(),p.zmin());
     tree.MakeOctree(depth);
     tree.PointToVoxel(p.m_VectorPoint);
-    tree.EdgeToVoxel(p.m_VectorEdge,p.m_VectorPoint);
+//    tree.EdgeToVoxel(p.m_VectorEdge,p.m_VectorPoint);
     tree.FacetToVoxel(p.m_VectorFacet, p.m_VectorPoint);
 
     WinWidth = 800;

@@ -42,13 +42,20 @@ class Voxelization:public Octree
         void GeneralLocationEdge_Bresenham(OctreePoint point1, OctreePoint point2);
         //facet parallel to surface, which means all the voxels will have a same coordinate
         void ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial);
+        //facet perpendicular to surface, which means one coordinate of the normal is 0
+        void PerpendicularToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial, int max_normal);
         //use 2D Bresenham to voxel the line
         void Bresenham2D(Point2D pt2d1, Point2D pt2d2);
+        //use supercoverline to voxel the line
+        void SuperCoverLine2D(Point2D pt2d1, Point2D pt2d2);
         //use floodseedfill to fill the 2dfacet
         void FloodSeedFill2D(Point2D point2d);
+        //use checktriangle to check whether the point in the triangle or not
+        bool CheckTriangle(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3);
+        //use checksameside to check whether the point in in the same side
+        bool CheckSameSide(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3);
     private:
         float xmax,xmin,ymax,ymin,zmax,zmin;
         set<Point2D> opoint2D; //to save the point of the 2d Bresenham line
-        vector<Point2D> strpoint2d; //to save the point filled by floodseedfill2d
 };
 
