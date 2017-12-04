@@ -525,13 +525,21 @@ void Voxelization::PerpendicularToSurfaceFacet(OctreePoint point1, OctreePoint p
                     SuperCoverLine2D(point2d2,point2d3);
                     FloodSeedFill2D(centroid);
                     if(point2.z-point1.z==0)
-                        k=1.0*(point3.y-point1.y)/(point3.z-point1.z);
+                    {
+                        diffz=point3.z-point1.z;
+                        diffy=point3.y-point1.y;
+                        k=1.0*diffy/diffz;
+                    }
                     else
-                        k=1.0*(point2.y-point1.y)/(point2.z-point1.z);
+                    {
+                        diffz=point2.z-point1.z;
+                        diffy=point2.y-point1.y;
+                        k=1.0*diffy/diffz;
+                    }
                     //y=k*(z-z1)+y1
                     for(it=opoint2D.begin();it!=opoint2D.end();it++)
                     {
-                        SurfacePoint(it->x,(unsigned int)(k*(it->y-point1.z)+point1.y),it->y);
+                        SurfacePoint(it->x,(k*int(it->y-point1.z)+point1.y),it->y);
                     }
                 }
                 else
@@ -551,13 +559,21 @@ void Voxelization::PerpendicularToSurfaceFacet(OctreePoint point1, OctreePoint p
                     SuperCoverLine2D(point2d2,point2d3);
                     FloodSeedFill2D(centroid);
                     if(point2.y-point1.y==0)
-                        k=1.0*(point3.z-point1.z)/(point3.y-point1.y);
+                    {
+                        diffz=point3.z-point1.z;
+                        diffy=point3.y-point1.y;
+                        k=1.0*diffz/diffy;
+                    }
                     else
-                        k=1.0*(point2.z-point1.z)/(point2.y-point1.y);
+                    {
+                        diffz=point2.z-point1.z;
+                        diffy=point2.y-point1.y;
+                        k=1.0*diffz/diffy;
+                    }
                     //z=k*(y-y1)+z1
                     for(it=opoint2D.begin();it!=opoint2D.end();it++)
                     {
-                        SurfacePoint(it->x,it->y,(unsigned int)(k*(it->y-point1.y)+point1.z));
+                        SurfacePoint(it->x,it->y,(k*int(it->y-point1.y)+point1.z));
                     }
                 }
             }
@@ -581,13 +597,21 @@ void Voxelization::PerpendicularToSurfaceFacet(OctreePoint point1, OctreePoint p
                     SuperCoverLine2D(point2d2,point2d3);
                     FloodSeedFill2D(centroid);
                     if(point2.z-point1.z==0)
-                        k=1.0*(point3.x-point1.x)/(point3.z-point1.z);
+                    {
+                        diffz=point3.z-point1.z;
+                        diffx=point3.x-point1.x;
+                        k=1.0*diffx/diffz;
+                    }
                     else
-                        k=1.0*(point2.x-point1.x)/(point2.z-point1.z);
+                    {
+                        diffz=point2.z-point1.z;
+                        diffx=point2.x-point1.x;
+                        k=1.0*diffx/diffz;
+                    }
                     //x=k*(z-z1)+x1
                     for(it=opoint2D.begin();it!=opoint2D.end();it++)
                     {
-                        SurfacePoint((unsigned int)(k*(it->y-point1.z)+point1.x),it->x,it->y);
+                        SurfacePoint((k*int(it->y-point1.z)+point1.x),it->x,it->y);
                     }
                 }
                 else
@@ -607,13 +631,21 @@ void Voxelization::PerpendicularToSurfaceFacet(OctreePoint point1, OctreePoint p
                     SuperCoverLine2D(point2d2,point2d3);
                     FloodSeedFill2D(centroid);
                     if(point2.x-point1.x==0)
-                        k=1.0*(point3.z-point1.z)/(point3.x-point1.x);
+                    {
+                        diffz=point3.z-point1.z;
+                        diffx=point3.x-point1.x;
+                        k=1.0*diffz/diffx;
+                    }
                     else
-                        k=1.0*(point2.z-point1.z)/(point2.x-point1.x);
+                    {
+                        diffz=point2.z-point1.z;
+                        diffx=point2.x-point1.x;
+                        k=1.0*diffz/diffx;
+                    }
                     //z=k*(x-x1)+z1
                     for(it=opoint2D.begin();it!=opoint2D.end();it++)
                     {
-                        SurfacePoint(it->x,it->y,(unsigned int)(k*(it->x-point1.x)+point1.z));
+                        SurfacePoint(it->x,it->y,(k*int(it->x-point1.x)+point1.z));
                     }
                 }
             }
@@ -651,7 +683,7 @@ void Voxelization::PerpendicularToSurfaceFacet(OctreePoint point1, OctreePoint p
                     //x=k*(y-y1)+x1
                     for(it=opoint2D.begin();it!=opoint2D.end();it++)
                     {
-                        SurfacePoint((k*(it->x-point1.y)+point1.x),it->x,it->y);
+                        SurfacePoint((k*int(it->x-point1.y)+point1.x),it->x,it->y);
                     }
                 }
                 else
@@ -685,7 +717,7 @@ void Voxelization::PerpendicularToSurfaceFacet(OctreePoint point1, OctreePoint p
                     //y=k*(x-x1)+y1
                     for(it=opoint2D.begin();it!=opoint2D.end();it++)
                     {
-                        SurfacePoint(it->x,(k*(it->x-point1.x)+point1.y),it->y);
+                        SurfacePoint(it->x,(k*int(it->x-point1.x)+point1.y),it->y);
                     }
                 }
             }
