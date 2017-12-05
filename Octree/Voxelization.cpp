@@ -1120,9 +1120,9 @@ void Voxelization::Scanning2D(void)
     it++;
     for(;it!=mpoint2D.end();it++)
     {
-        if((it->x==prepoint.x)&&(prepoint.y-it->y!=1))
+        if((it->x==prepoint.x)&&((prepoint.y-it->y)>1))
         {
-            for(unsigned int j=prepoint.y-1;j!=it->y;j--)
+            for(unsigned int j=prepoint.y-1;j>it->y;j--)
             {
                 prepoint.y=j;
                 opoint2D.insert(prepoint);
@@ -1140,16 +1140,9 @@ void Voxelization::CoverVoxel2D_Scanning(OctreePoint point1,OctreePoint point2,O
     {
         case 1:
             {
-                //the centroid of the triangle must be in this triangle
-                //so the centroid can be used to set as the seed
-                Point2D centroid((point1.y+point2.y+point3.y)/3,(point1.z+point2.z+point3.z)/3);
                 Point2D point2d1(point1.y,point1.z);
                 Point2D point2d2(point2.y,point2.z);
                 Point2D point2d3(point3.y,point3.z);
-                //due to the rounding error,centroid could be out of the triangle
-                //so we should check it whether it is in the triangle
-                if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
-                    break;
                 SuperCoverLine2D(point2d1,point2d2);
                 SuperCoverLine2D(point2d1,point2d3);
                 SuperCoverLine2D(point2d2,point2d3);
@@ -1158,16 +1151,9 @@ void Voxelization::CoverVoxel2D_Scanning(OctreePoint point1,OctreePoint point2,O
             break;
         case 2:
             {
-                //the centroid of the triangle must be in this triangle
-                //so the centroid can be used to set as the seed
-                Point2D centroid((point1.x+point2.x+point3.x)/3,(point1.z+point2.z+point3.z)/3);
                 Point2D point2d1(point1.x,point1.z);
                 Point2D point2d2(point2.x,point2.z);
                 Point2D point2d3(point3.x,point3.z);
-                //due to the rounding error,centroid could be out of the triangle
-                //so we should check it whether it is in the triangle
-                if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
-                    break;
                 SuperCoverLine2D(point2d1,point2d2);
                 SuperCoverLine2D(point2d1,point2d3);
                 SuperCoverLine2D(point2d2,point2d3);
@@ -1176,16 +1162,9 @@ void Voxelization::CoverVoxel2D_Scanning(OctreePoint point1,OctreePoint point2,O
             break;
         case 3:
             {
-                //the centroid of the triangle must be in this triangle
-                //so the centroid can be used to set as the seed
-                Point2D centroid((point1.x+point2.x+point3.x)/3,(point1.y+point2.y+point3.y)/3);
                 Point2D point2d1(point1.x,point1.y);
                 Point2D point2d2(point2.x,point2.y);
                 Point2D point2d3(point3.x,point3.y);
-                //due to the rounding error,centroid could be out of the triangle
-                //so we should check it whether it is in the triangle
-                if(!CheckTriangle(centroid,point2d1,point2d2,point2d3))
-                    break;
                 SuperCoverLine2D(point2d1,point2d2);
                 SuperCoverLine2D(point2d1,point2d3);
                 SuperCoverLine2D(point2d2,point2d3);
