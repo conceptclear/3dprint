@@ -1,3 +1,17 @@
+/*********************************************************************************
+  *Copyright(C),2017-2017,conceptclear
+  *FileName:  Voxelization.h
+  *Author:  conceptclear
+  *Version:  1.0
+  *Date:  2017.12.5
+  *Description:  use this class to voxelize the Patches
+                 provide two methods to voxelize the 2dline,
+                 one is SuperCoverLine2D
+                 the other is Bresenham2D.
+                 provide two methods to voxelize the facet,
+                 one is driven by floodseedfill,
+                 the other is driven by scanning
+**********************************************************************************/
 #pragma once
 #include "Octree.h"
 #include <vector>
@@ -21,39 +35,78 @@ class Voxelization:public Octree
                 Octree(x,y,z,depth);
             }
         ~Voxelization(){}
+
+
+        //get num
         //get the extremum of the body
         void GetExtremum(float x_max,float x_min,float y_max,float y_min,float z_max,float z_min);
+
+
+        //Change to voxel
         //transform the vertex positions of a primitive into a regular eulerian grid
         void PointToVoxel(vector<CVertex> VectorPoint);
         //transform the edges of a primitive into a regular eulerian grid
         void EdgeToVoxel(vector<CEdge> VectorEdge, vector<CVertex> VectorPoint);
         //transform the edegs and facet of a primitive into a regular eulerian grid
         void FacetToVoxel(vector<CFacet> VectorFacet, vector<CVertex> VectorPoint);
+
+
+        //some basic funcitons
+        //Change this point to 0
         void SurfacePoint(unsigned int x,unsigned int y,unsigned int z);
+        //Change coordinate from patches to voxels
         unsigned int ChangeCoordinate(float coordinate,float max,float min);
         //to check if the num is at the max vertex
         unsigned int CheckNum(unsigned int num);
+        //use checktriangle to check whether the point in the triangle or not
+        bool CheckTriangle(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3);
+        //use checksameside to check whether the point in in the same side
+        bool CheckSameSide(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3);
+        //use 2D Bresenham to voxel the line
+        void Bresenham2D(Point2D pt2d1, Point2D pt2d2);
+        //use supercoverline to voxel the line
+        void SuperCoverLine2D(Point2D pt2d1, Point2D pt2d2);
+
+
+        //Edge change by Bresenham
         //Change the Edge on the part to voxel by using Bresenham
         void EdgeChange_Bresenham(OctreePoint point1, OctreePoint point2);
         //edge perpendicular to surface ,which means only one coordinate will change
         void PerpendicularToSurfaceEdge(OctreePoint point1,OctreePoint point2, int serial);
         //edge parallel to surface ,which means only two coordinate will change
         void ParallelToSurfaceEdge_Bresenham(OctreePoint point1, OctreePoint point2, int serial);
+        //general location means three coordinates will change
         void GeneralLocationEdge_Bresenham(OctreePoint point1, OctreePoint point2);
+
+
+        //Facet change by floodfill
+        //Change the Facet on the part to voxel by using FloodFill
+        void FacetChange_FloodFill(OctreePoint point1, OctreePoint point2, OctreePoint point3);
         //facet parallel to surface, which means all the voxels will have a same coordinate
-        void ParallelToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial);
+        void ParallelToSurfaceFacet_FloodFill(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial);
         //facet perpendicular to surface, which means one coordinate of the normal is 0
-        void PerpendicularToSurfaceFacet(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial, int max_normal);
-        //use 2D Bresenham to voxel the line
-        void Bresenham2D(Point2D pt2d1, Point2D pt2d2);
-        //use supercoverline to voxel the line
-        void SuperCoverLine2D(Point2D pt2d1, Point2D pt2d2);
+        void PerpendicularToSurfaceFacet_FloodFill(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial, int max_normal);
+        //the facet with general location
+        void GeneralLocationFacet_FloodFill(OctreePoint point1, OctreePoint point2, OctreePoint point3,int Normal_x,int Normal_y,int Normal_z,int Normalnum);
         //use floodseedfill to fill the 2dfacet
         void FloodSeedFill2D(Point2D point2d);
-        //use checktriangle to check whether the point in the triangle or not
-        bool CheckTriangle(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3);
-        //use checksameside to check whether the point in in the same side
-        bool CheckSameSide(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3);
+        //calculate the voxels to be fill
+        void CoverVoxel2D_FloodFill(OctreePoint point1,OctreePoint point2,OctreePoint point3,int serial);
+
+
+        //Facet change by scanning
+        //Change the Facet on the part to voxel by using Scanning
+        void FacetChange_Scanning(OctreePoint point1, OctreePoint point2, OctreePoint point3);
+        //facet parallel to surface, which means all the voxels will have a same coordinate
+        void ParallelToSurfaceFacet_Scanning(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial);
+        //facet perpendicular to surface, which means one coordinate of the normal is 0
+        void PerpendicularToSurfaceFacet_Scanning(OctreePoint point1, OctreePoint point2, OctreePoint point3, int serial, int max_normal);
+        //the facet with general location
+        void GeneralLocationFacet_Scanning(OctreePoint point1, OctreePoint point2, OctreePoint point3,int Normal_x,int Normal_y,int Normal_z,int Normalnum);
+        //use scanning to fill the 2dfacet
+        void Scanning2D(void);
+        //calculate the voxels to be fill
+        void CoverVoxel2D_Scanning(OctreePoint point1,OctreePoint point2,OctreePoint point3,int serial);
     private:
         float xmax,xmin,ymax,ymin,zmax,zmin;
         set<Point2D> opoint2D; //to save the point of the 2d Bresenham line
