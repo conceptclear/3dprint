@@ -122,11 +122,18 @@ class Octree
         void Traverse(void);
         void PreOrder(OctreeNode *pRoot); //traverse the octree
         void DisplayOctree(OctreeNode *pRoot); //draw
+        unsigned int TraverseZ(unsigned int z);
+        unsigned int PreOrderZ(OctreeNode *pRoot, unsigned int z); //traverse the octree by z
+        unsigned int GetContour(OctreeNode *pRoot); //get the voxel whether on the facet
+        int GetUp(OctreeNode *pRoot); //get the flag num from the up voxel
+        int GetDown(OctreeNode *pRoot); //get the flag num from the down voxel
+        void SetImpactFactor(OctreeNode *pRoot); //set impactfactor
         void DrawVoxel(unsigned int x,unsigned int y,unsigned int z);
         int IsEmpty()
         {return root==NULL?1:0;}
    protected:
         OctreeNode *root;
+        int layer_impactfactor;
         int max_height;
 };
 

@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
     tree.PointToVoxel(p.m_VectorPoint);
 //    tree.EdgeToVoxel(p.m_VectorEdge,p.m_VectorPoint);
     tree.FacetToVoxel(p.m_VectorFacet, p.m_VectorPoint);
+    tree.GetSurfacePointNum();
 
     WinWidth = 800;
     WinHeight = 800;

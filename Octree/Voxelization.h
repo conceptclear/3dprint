@@ -37,9 +37,11 @@ class Voxelization:public Octree
         ~Voxelization(){}
 
 
-        //get num
+        //member variables
         //get the extremum of the body
         void GetExtremum(float x_max,float x_min,float y_max,float y_min,float z_max,float z_min);
+        //get the number of surfacepoint
+        void GetSurfacePointNum(void);
 
 
         //Change to voxel
@@ -109,6 +111,8 @@ class Voxelization:public Octree
         void CoverVoxel2D_Scanning(OctreePoint point1,OctreePoint point2,OctreePoint point3,int serial);
     private:
         float xmax,xmin,ymax,ymin,zmax,zmin;
+        vector<unsigned int> surface_point_num; //the number of the voxels in all layers
+        vector<int> model_impact_factor; //the number of the voxels in all layers
         set<Point2D> opoint2D; //to save the point of the 2d Bresenham line
 };
 

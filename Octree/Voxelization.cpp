@@ -11,6 +11,20 @@ void Voxelization::GetExtremum(float x_max,float x_min,float y_max,float y_min,f
     zmin=z_min;
 }
 
+void Voxelization::GetSurfacePointNum(void)
+{
+    unsigned int num;
+    for(unsigned int i=0;i<(1<<(max_height-1));i++)
+    {
+        num = Octree::TraverseZ(i);
+        surface_point_num.push_back(i);
+        model_impact_factor.push_back(Octree::layer_impactfactor);
+        cout<<num<<" voxels on the model in layer "<<i<<endl;
+        cout<<"the impact factor is "<<Octree::layer_impactfactor<<endl;
+        cout<<"the calculate factor is "<<1.0*Octree::layer_impactfactor/num<<endl;
+    }
+}
+
 void Voxelization::SurfacePoint(unsigned int x, unsigned int y, unsigned int z)
 {
     x=CheckNum(x);
