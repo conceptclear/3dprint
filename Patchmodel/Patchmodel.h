@@ -1,3 +1,11 @@
+/*********************************************************************************
+  *Copyright(C),2017-2017,conceptclear
+  *FileName:  Patchmodel.h
+  *Author:  conceptclear
+  *Version:  1.0
+  *Date:  2017.12.5
+  *Description:  use this class to read the patches graph
+**********************************************************************************/
 #pragma once
 
 #include "../basic components/CVertex.h"

@@ -1,3 +1,11 @@
+/*********************************************************************************
+  *Copyright(C),2017-2017,conceptclear
+  *FileName:  Octree.h
+  *Author:  conceptclear
+  *Version:  1.0
+  *Date:  2017.12.5
+  *Description:  use this class to create an octree
+**********************************************************************************/
 #pragma once
 
 #include <iostream>

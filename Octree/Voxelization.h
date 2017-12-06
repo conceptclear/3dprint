@@ -58,10 +58,6 @@ class Voxelization:public Octree
         unsigned int ChangeCoordinate(float coordinate,float max,float min);
         //to check if the num is at the max vertex
         unsigned int CheckNum(unsigned int num);
-        //use checktriangle to check whether the point in the triangle or not
-        bool CheckTriangle(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3);
-        //use checksameside to check whether the point in in the same side
-        bool CheckSameSide(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3);
         //use 2D Bresenham to voxel the line
         void Bresenham2D(Point2D pt2d1, Point2D pt2d2);
         //use supercoverline to voxel the line
@@ -92,6 +88,10 @@ class Voxelization:public Octree
         void FloodSeedFill2D(Point2D point2d);
         //calculate the voxels to be fill
         void CoverVoxel2D_FloodFill(OctreePoint point1,OctreePoint point2,OctreePoint point3,int serial);
+        //use checktriangle to check whether the point in the triangle or not
+        bool CheckTriangle(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3);
+        //use checksameside to check whether the point in in the same side
+        bool CheckSameSide(Point2D centroid, Point2D point2d1, Point2D point2d2, Point2D point2d3);
 
 
         //Facet change by scanning
