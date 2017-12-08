@@ -10,12 +10,30 @@ static int oldmy=-1,oldmx=-1;
 static int angle=90;
 static float heightz=0.0f;
 static int depth = 7;
+void SetIllumination(void)
+{
+	GLfloat light_ambient [] = { 0.3, 0.3, 0.3, 1.0 };
+	GLfloat light_diffuse [] = { 0.5, 0.5, 0.5, 1.0 };
+	
+	glLightfv(GL_LIGHT0, GL_AMBIENT , light_ambient );
+    glLightfv(GL_LIGHT0, GL_DIFFUSE , light_diffuse );
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+}
+
 void drawSTL(void)
 {
+    glShadeModel(GL_FLAT);//设置颜色填充模式  
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
+    GLfloat light_position[] = { 10.0, 10.0, 10.0, 1.0 }; 
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
     p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
+
     p.drawPatch();
     //    p.drawAABB();
     glTranslatef(p.xmin(),p.ymin(),p.zmin());
@@ -25,6 +43,7 @@ void drawSTL(void)
     //p.drawslicefacet();
     glutSwapBuffers();
 }
+
 void Reshape(int w, int h)
 {
     WinWidth = w;
@@ -79,9 +98,13 @@ int main(int argc, char *argv[])
     WinHeight = 800;
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_RGB | GLUT_DOUBLE);
-    //glutInitWindowPosition(100, 100);
     glutInitWindowSize(WinWidth, WinHeight);
-    glutCreateWindow("ReadSTL");
+    glutCreateWindow("Draw");
+    glClearColor(1.0f,1.0f,1.0f,1.0f);
+    SetIllumination();
+    glEnable(GL_COLOR_MATERIAL);//启用颜色追踪  
+    glColorMaterial(GL_FRONT,GL_AMBIENT_AND_DIFFUSE);  
+    //物体正面的材料环境颜色和散射颜色，追踪glColor所设置的颜色
 
     glEnable(GL_DEPTH_TEST);
     glutReshapeFunc(Reshape);

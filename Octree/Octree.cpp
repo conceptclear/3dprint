@@ -314,7 +314,7 @@ void Octree::SetImpactFactor(OctreeNode *pRoot)
 
 void Octree::DrawVoxel(unsigned int x,unsigned int y,unsigned int z)
 {
-    glColor3f(1.0f,0.0f,0.0f);
+    glColor3f(0.0f,0.0f,0.0f);
     glBegin(GL_LINE_LOOP);
     glVertex3i(x,y,z);
     glVertex3i(x+1,y,z);
@@ -343,7 +343,7 @@ void Octree::DrawVoxel(unsigned int x,unsigned int y,unsigned int z)
     glVertex3i(x,y+1,z);
     glVertex3i(x,y+1,z+1);
     glEnd();
-    glColor3f(0.0f,1.0f,1.0f);
+    glColor3f(1.0f,1.0f,0.0f);
     glBegin(GL_POLYGON);
     glVertex3i(x,y,z);
     glVertex3i(x+1,y,z);
