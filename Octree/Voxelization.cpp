@@ -19,9 +19,11 @@ void Voxelization::GetSurfacePointNum(void)
         num = Octree::TraverseZ(i);
         surface_point_num.push_back(i);
         model_impact_factor.push_back(Octree::layer_impactfactor);
+        /*
         cout<<num<<" voxels on the model in layer "<<i<<endl;
         cout<<"the impact factor is "<<Octree::layer_impactfactor<<endl;
         cout<<"the calculate factor is "<<1.0*Octree::layer_impactfactor/num<<endl;
+        */
     }
 }
 

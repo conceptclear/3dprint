@@ -24,15 +24,13 @@ void SetIllumination(void)
 
 void drawSTL(void)
 {
-    glShadeModel(GL_FLAT);//设置颜色填充模式  
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
-    GLfloat light_position[] = { 10.0, 10.0, 10.0, 1.0 }; 
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-
     p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
+    GLfloat light_position[] = { 0.0, 1.0, 0.0, 1.0 }; 
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glutSolidSphere(0.2,10,10);
 
     p.drawPatch();
     //    p.drawAABB();
@@ -102,6 +100,7 @@ int main(int argc, char *argv[])
     glutCreateWindow("Draw");
     glClearColor(1.0f,1.0f,1.0f,1.0f);
     SetIllumination();
+    glShadeModel(GL_FLAT);//设置颜色填充模式  
     glEnable(GL_COLOR_MATERIAL);//启用颜色追踪  
     glColorMaterial(GL_FRONT,GL_AMBIENT_AND_DIFFUSE);  
     //物体正面的材料环境颜色和散射颜色，追踪glColor所设置的颜色
