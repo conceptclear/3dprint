@@ -4,7 +4,8 @@ void Patchmodel::drawPatch(void)
     glColor3f(0.0, 0.4, 0.2);
     for (unsigned long i = 0; i < m_VectorFacet.size(); i++)
     {
-        glBegin(GL_LINE_LOOP);
+        glBegin(GL_TRIANGLES);
+        glNormal3f(m_VectorFacet[i].m_Normal[0],m_VectorFacet[i].m_Normal[1],m_VectorFacet[i].m_Normal[2]);
         glVertex3f(m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[0], m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[1], m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[2]);
         glVertex3f(m_VectorPoint[m_VectorFacet[i].PointIndex[1]].m_Point[0], m_VectorPoint[m_VectorFacet[i].PointIndex[1]].m_Point[1], m_VectorPoint[m_VectorFacet[i].PointIndex[1]].m_Point[2]);
         glVertex3f(m_VectorPoint[m_VectorFacet[i].PointIndex[2]].m_Point[0], m_VectorPoint[m_VectorFacet[i].PointIndex[2]].m_Point[1], m_VectorPoint[m_VectorFacet[i].PointIndex[2]].m_Point[2]);
@@ -176,7 +177,8 @@ void Patchmodel::drawslice(float z)
 
 void Patchmodel::setperspective(double eyex,double eyey,double eyez,double centrex,double centrey,double centrez,double upx,double upy,double upz)
 {
-    gluLookAt(0.5*(x_max + x_min) + 2 * eyex * max(max((x_max - x_min), (y_max - y_min)), (z_max - z_min)),  0.5*(y_max + y_min) + 2 * eyey * max(max((x_max - x_min), (y_max - y_min)), (z_max - z_min)), 0.5*(z_max + z_min) + eyez * max(max((x_max - x_min), (y_max - y_min)), (z_max - z_min)), 0.5*(x_max + x_min) + centrex, 0.5*(y_max + y_min) + centrey, 0.5*(z_max + z_min) + centrez, upx, upy, upz);
+    float maxlength = max(max(x_max-x_min,y_max-y_min),z_max-z_min);
+    gluLookAt( 2 * eyex * maxlength, 2 * eyey * maxlength, eyez * maxlength, centrex, centrey, centrez, upx, upy, upz);
 }
 
 bool Patchmodel::sliceequalllayers(int layernumber)

@@ -12,33 +12,40 @@ static float heightz=0.0f;
 static int depth = 7;
 void SetIllumination(void)
 {
-	GLfloat light_ambient [] = { 0.3, 0.3, 0.3, 1.0 };
-	GLfloat light_diffuse [] = { 0.5, 0.5, 0.5, 1.0 };
+	GLfloat light_ambient [] = { 0.2, 0.2, 0.2, 1.0 };
+	GLfloat light_diffuse [] = { 0.6, 0.6, 0.6, 1.0 };
+    GLfloat light_position[] = { 1.0f,1.0f,1.0f,0.0f};
 	
 	glLightfv(GL_LIGHT0, GL_AMBIENT , light_ambient );
     glLightfv(GL_LIGHT0, GL_DIFFUSE , light_diffuse );
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 }
 
 void drawSTL(void)
 {
+    glClearColor(1.0f,1.0f,1.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
     p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
-    GLfloat light_position[] = { 0.0, 1.0, 0.0, 1.0 }; 
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    glutSolidSphere(0.2,10,10);
-
-    p.drawPatch();
-    //    p.drawAABB();
+    glPushMatrix();
+    glTranslatef(-(p.xmax()+p.xmin())/2,-(p.ymax()+p.ymin())/2,-(p.zmax()+p.zmin())/2);
+//    p.drawPatch();
+//    p.drawAABB();
+    glPushMatrix();
     glTranslatef(p.xmin(),p.ymin(),p.zmin());
     glScalef((p.xmax()-p.xmin())/pow(2,depth-1),(p.ymax()-p.ymin())/pow(2,depth-1),(p.zmax()-p.zmin())/pow(2,depth-1));
     tree.Traverse();
+    glPopMatrix();
     //	p.drawsliceequalllayers(30);
     //p.drawslicefacet();
+    glPopMatrix();
     glutSwapBuffers();
 }
 
@@ -98,12 +105,7 @@ int main(int argc, char *argv[])
     glutInitDisplayMode(GLUT_DEPTH | GLUT_RGB | GLUT_DOUBLE);
     glutInitWindowSize(WinWidth, WinHeight);
     glutCreateWindow("Draw");
-    glClearColor(1.0f,1.0f,1.0f,1.0f);
     SetIllumination();
-    glShadeModel(GL_FLAT);//设置颜色填充模式  
-    glEnable(GL_COLOR_MATERIAL);//启用颜色追踪  
-    glColorMaterial(GL_FRONT,GL_AMBIENT_AND_DIFFUSE);  
-    //物体正面的材料环境颜色和散射颜色，追踪glColor所设置的颜色
 
     glEnable(GL_DEPTH_TEST);
     glutReshapeFunc(Reshape);
