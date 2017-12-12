@@ -1,7 +1,7 @@
 #include "Patchmodel/Patchmodel.h"
 #include "Octree/Voxelization.h"
-#define PI 3.1415926
 #include <cmath>
+#define PI 3.1415926
 int WinWidth;
 int WinHeight;
 Patchmodel p;
@@ -14,7 +14,7 @@ void SetIllumination(void)
 {
 	GLfloat light_ambient [] = { 0.2, 0.2, 0.2, 1.0 };
 	GLfloat light_diffuse [] = { 0.6, 0.6, 0.6, 1.0 };
-    GLfloat light_position[] = { 1.0f,1.0f,1.0f,0.0f};
+    GLfloat light_position[] = { 0.0f,1.0f,1.0f,0.0f};
 	
 	glLightfv(GL_LIGHT0, GL_AMBIENT , light_ambient );
     glLightfv(GL_LIGHT0, GL_DIFFUSE , light_diffuse );
@@ -30,21 +30,53 @@ void drawSTL(void)
 {
     glClearColor(1.0f,1.0f,1.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColor3f(1.0,0.0,0.0);
+
+    //first viewport
+    glEnable(GL_SCISSOR_TEST);  
+    glScissor(0,WinHeight/2,WinWidth/2,WinHeight/2);  
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
+    glDisable(GL_SCISSOR_TEST);  
+
+    glViewport(0,WinHeight/2,WinWidth/2,WinHeight/2);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45, 1.0*WinWidth / WinHeight, 1, 1000);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
     glPushMatrix();
+    SetIllumination();
     glTranslatef(-(p.xmax()+p.xmin())/2,-(p.ymax()+p.ymin())/2,-(p.zmax()+p.zmin())/2);
-//    p.drawPatch();
+    p.drawPatch();
 //    p.drawAABB();
+    //	p.drawsliceequalllayers(30);
+    //p.drawslicefacet();
+    glPopMatrix();
+    
+    //second viewport
+    glEnable(GL_SCISSOR_TEST);  
+    glScissor(WinWidth/2,WinHeight/2,WinWidth/2,WinHeight/2);  
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
+    glDisable(GL_SCISSOR_TEST);  
+
+    glViewport(WinWidth/2,WinHeight/2,WinWidth/2,WinHeight/2);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45, 1.0*WinWidth / WinHeight, 1, 1000);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
     glPushMatrix();
+    SetIllumination();
+    glTranslatef(-(p.xmax()+p.xmin())/2,-(p.ymax()+p.ymin())/2,-(p.zmax()+p.zmin())/2);
     glTranslatef(p.xmin(),p.ymin(),p.zmin());
     glScalef((p.xmax()-p.xmin())/pow(2,depth-1),(p.ymax()-p.ymin())/pow(2,depth-1),(p.zmax()-p.zmin())/pow(2,depth-1));
     tree.Traverse();
-    glPopMatrix();
-    //	p.drawsliceequalllayers(30);
-    //p.drawslicefacet();
     glPopMatrix();
     glutSwapBuffers();
 }
@@ -53,13 +85,10 @@ void Reshape(int w, int h)
 {
     WinWidth = w;
     WinHeight = h;
-    // //改变显示区域，起始位置为客户端窗口左下角（非坐标原点）
     glViewport(0, 0, w, h);
 
-    // 开启更新深度缓冲区的功能
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    //宽高比改为当前值，视线区域与屏幕大小一致；
     gluPerspective(45, 1.0*WinWidth / WinHeight, 1, 1000);
     glMatrixMode(GL_MODELVIEW);
 }
@@ -99,13 +128,12 @@ int main(int argc, char *argv[])
     tree.FacetToVoxel(p.m_VectorFacet, p.m_VectorPoint);
     tree.GetSurfacePointNum();
 
-    WinWidth = 800;
-    WinHeight = 800;
+    WinWidth = 1000;
+    WinHeight = 1000;
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_RGB | GLUT_DOUBLE);
     glutInitWindowSize(WinWidth, WinHeight);
     glutCreateWindow("Draw");
-    SetIllumination();
 
     glEnable(GL_DEPTH_TEST);
     glutReshapeFunc(Reshape);

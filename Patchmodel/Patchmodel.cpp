@@ -1,9 +1,16 @@
 #include "Patchmodel.h"
 void Patchmodel::drawPatch(void)
 {
-    glColor3f(0.0, 0.4, 0.2);
     for (unsigned long i = 0; i < m_VectorFacet.size(); i++)
     {
+        glColor3f(1.0, 1.0, 1.0);
+        glBegin(GL_LINE_LOOP);
+        glNormal3f(m_VectorFacet[i].m_Normal[0],m_VectorFacet[i].m_Normal[1],m_VectorFacet[i].m_Normal[2]);
+        glVertex3f(m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[0], m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[1], m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[2]);
+        glVertex3f(m_VectorPoint[m_VectorFacet[i].PointIndex[1]].m_Point[0], m_VectorPoint[m_VectorFacet[i].PointIndex[1]].m_Point[1], m_VectorPoint[m_VectorFacet[i].PointIndex[1]].m_Point[2]);
+        glVertex3f(m_VectorPoint[m_VectorFacet[i].PointIndex[2]].m_Point[0], m_VectorPoint[m_VectorFacet[i].PointIndex[2]].m_Point[1], m_VectorPoint[m_VectorFacet[i].PointIndex[2]].m_Point[2]);
+        glEnd();
+        glColor3f(0.0, 1.0, 1.0);
         glBegin(GL_TRIANGLES);
         glNormal3f(m_VectorFacet[i].m_Normal[0],m_VectorFacet[i].m_Normal[1],m_VectorFacet[i].m_Normal[2]);
         glVertex3f(m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[0], m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[1], m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[2]);
