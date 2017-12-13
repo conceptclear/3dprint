@@ -13,7 +13,8 @@
 #include "../basic components/CEdge.h"
 #include "../basic components/CFacet.h"
 #include "../basic components/CVertex.h"
-#include <GL/glut.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 using namespace std;
 
 class OctreePoint

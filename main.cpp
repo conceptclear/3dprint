@@ -4,12 +4,24 @@
 #define PI 3.1415926
 int WinWidth;
 int WinHeight;
-Patchmodel p;
-Voxelization tree;
 static int oldmy=-1,oldmx=-1;
 static int angle=90;
 static float heightz=0.0f;
 static int depth = 7;
+
+char szTitle[8] = "3dprint";
+
+static void error_callback(int error, const char* description)
+{
+    cout<<"error:"<<error<<"\n"<<"description:"<<description<<endl;
+}
+
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)  
+{  
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)  
+        glfwSetWindowShouldClose(window, GL_TRUE);  
+}  
+
 void SetIllumination(void)
 {
 	GLfloat light_ambient [] = { 0.2, 0.2, 0.2, 1.0 };
@@ -26,6 +38,7 @@ void SetIllumination(void)
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 }
 
+/*
 void drawSTL(void)
 {
     glClearColor(1.0f,1.0f,1.0f,1.0f);
@@ -80,8 +93,9 @@ void drawSTL(void)
     glPopMatrix();
     glutSwapBuffers();
 }
+*/
 
-void Reshape(int w, int h)
+void framebuffer_size_callback(GLFWwindow* window, int w, int h)
 {
     WinWidth = w;
     WinHeight = h;
@@ -91,22 +105,26 @@ void Reshape(int w, int h)
     glLoadIdentity();
     gluPerspective(45, 1.0*WinWidth / WinHeight, 1, 1000);
     glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 }
 
-void LeftMousePick( int button, int state, int x, int y)
-{
-    if(button == GLUT_LEFT_BUTTON)
-    {
-        if(state == GLUT_DOWN)
-            oldmx=x,oldmy=y;
-    }
-}
-
-void onMouseMove( int x,int y)
+void cursor_pos_callback(GLFWwindow* window, double x,double y)
 {
     angle+=x-oldmx;
     heightz+=0.03f*(y-oldmy);
     oldmx=x,oldmy=y;
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        glfwSetCursorPosCallback(window, cursor_pos_callback); 
+    }
+    else
+    {
+        return;
+    }
 }
 
 int main(int argc, char *argv[])
@@ -116,6 +134,8 @@ int main(int argc, char *argv[])
         cout<<"Please Input the file address and the depth"<<endl;
         return -1;
     }
+    Patchmodel p;
+    Voxelization tree;
     p.ReadSTLFile(argv[1]);//读取地址
     depth = atoi(argv[2]);
     cout<<"xmax:"<<p.xmax()<<"\n"<<"xmin:"<<p.xmin()<<"\n"<<"ymax:"<<p.ymax()<<"\n"<<"ymin:"<<p.ymin()<<"\n"<<"zmax:"<<p.zmax()<<"\n"<<"zmin:"<<p.zmin()<<endl;
@@ -130,18 +150,90 @@ int main(int argc, char *argv[])
 
     WinWidth = 1000;
     WinHeight = 1000;
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_RGB | GLUT_DOUBLE);
-    glutInitWindowSize(WinWidth, WinHeight);
-    glutCreateWindow("Draw");
+    GLFWwindow *window;
 
+    glfwSetErrorCallback(error_callback);
+
+    if (!glfwInit()) return -1;  
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2); // OpenGL主版本号
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0); // OpenGL副版本号
+    window = glfwCreateWindow(WinWidth,WinHeight,szTitle,NULL,NULL);  
+    if (!window)  
+    {  
+        glfwTerminate();  
+        exit(EXIT_FAILURE);  
+    }  
+
+    glfwMakeContextCurrent(window);  
+  
+    glfwSetKeyCallback(window, key_callback);  
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); 
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwGetFramebufferSize(window, &WinWidth, &WinHeight);  
+    framebuffer_size_callback(window, WinWidth, WinHeight);  
+  
+    glewExperimental = GL_TRUE;  
+    glewInit();  
     glEnable(GL_DEPTH_TEST);
-    glutReshapeFunc(Reshape);
-    glutDisplayFunc(drawSTL);
-    glutIdleFunc(drawSTL);
-    glutMouseFunc(LeftMousePick);
-    glutMotionFunc(onMouseMove);
-    glutMainLoop();
+
+    while (!glfwWindowShouldClose(window))  
+    {  
+        glClearColor(1.0f,1.0f,1.0f,1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glColor3f(1.0,0.0,0.0);
+
+        //first viewport
+        glEnable(GL_SCISSOR_TEST);  
+        glScissor(0,WinHeight/2,WinWidth/2,WinHeight/2);  
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
+        glDisable(GL_SCISSOR_TEST);  
+
+        glViewport(0,WinHeight/2,WinWidth/2,WinHeight/2);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(45, 1.0*WinWidth / WinHeight, 1, 1000);
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
+        glPushMatrix();
+        SetIllumination();
+        glTranslatef(-(p.xmax()+p.xmin())/2,-(p.ymax()+p.ymin())/2,-(p.zmax()+p.zmin())/2);
+        p.drawPatch();
+        //    p.drawAABB();
+        //	p.drawsliceequalllayers(30);
+        //p.drawslicefacet();
+        glPopMatrix();
+
+        //second viewport
+        glEnable(GL_SCISSOR_TEST);  
+        glScissor(WinWidth/2,WinHeight/2,WinWidth/2,WinHeight/2);  
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
+        glDisable(GL_SCISSOR_TEST);  
+
+        glViewport(WinWidth/2,WinHeight/2,WinWidth/2,WinHeight/2);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(45, 1.0*WinWidth / WinHeight, 1, 1000);
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
+        glPushMatrix();
+        SetIllumination();
+        glTranslatef(-(p.xmax()+p.xmin())/2,-(p.ymax()+p.ymin())/2,-(p.zmax()+p.zmin())/2);
+        glTranslatef(p.xmin(),p.ymin(),p.zmin());
+        glScalef((p.xmax()-p.xmin())/pow(2,depth-1),(p.ymax()-p.ymin())/pow(2,depth-1),(p.zmax()-p.zmin())/pow(2,depth-1));
+        tree.Traverse();
+        glPopMatrix();
+        glfwSwapBuffers(window);  
+        glfwPollEvents();  
+    }  
+
+    glfwDestroyWindow(window);  
+    glfwTerminate();  
     return 0;
 }
 

@@ -14,7 +14,8 @@
 #include "../slice/point.h"
 #include <string>
 #include <fstream>
-#include <GL/glut.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <vector>
 #include <algorithm>
 #include <set>
