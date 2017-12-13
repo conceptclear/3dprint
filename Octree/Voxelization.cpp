@@ -315,3 +315,33 @@ void Voxelization::SuperCoverLine2D(Point2D pt2d1, Point2D pt2d2)
         cout<<"exsit -1"<<endl;
     }
 }
+
+float Voxelization::Xmax(void)
+{
+    return xmax;
+}
+
+float Voxelization::Xmin(void)
+{
+    return xmin;
+}
+
+float Voxelization::Ymax(void)
+{
+    return ymax;
+}
+
+float Voxelization::Ymin(void)
+{
+    return ymin;
+}
+
+float Voxelization::Zmax(void)
+{
+    return zmax;
+}
+
+float Voxelization::Zmin(void)
+{
+    return zmin;
+}

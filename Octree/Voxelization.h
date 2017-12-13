@@ -42,6 +42,18 @@ class Voxelization:public Octree
         void GetExtremum(float x_max,float x_min,float y_max,float y_min,float z_max,float z_min);
         //get the number of surfacepoint
         void GetSurfacePointNum(void);
+        //return xmax
+        float Xmax(void);
+        //return xmin
+        float Xmin(void);
+        //return ymax
+        float Ymax(void);
+        //return ymin
+        float Ymin(void);
+        //return zmax
+        float Zmax(void);
+        //return zmin
+        float Zmin(void);
 
 
         //Change to voxel

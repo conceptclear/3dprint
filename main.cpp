@@ -4,7 +4,7 @@
 #define PI 3.1415926
 int WinWidth;
 int WinHeight;
-static int oldmy=-1,oldmx=-1;
+static double oldmy=-1,oldmx=-1;
 static int angle=90;
 static float heightz=0.0f;
 static int depth = 7;
@@ -38,13 +38,20 @@ void SetIllumination(void)
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 }
 
-/*
-void drawSTL(void)
+void drawline(void)
 {
-    glClearColor(1.0f,1.0f,1.0f,1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColor3f(1.0,0.0,0.0);
+    glViewport(0,0,WinWidth,WinHeight);
+    glColor3f(1.0, 0.0, 0.0); 
+    glBegin(GL_LINES);  
+    glVertex2f(0, WinHeight/2);  
+    glVertex2f(WinWidth, WinHeight/2);  
+    glVertex2f(WinWidth/2, 0);  
+    glVertex2f(WinWidth/2, WinHeight);  
+    glEnd();  
+}
 
+void drawPatchmodel(Patchmodel* p)
+{
     //first viewport
     glEnable(GL_SCISSOR_TEST);  
     glScissor(0,WinHeight/2,WinWidth/2,WinHeight/2);  
@@ -59,16 +66,19 @@ void drawSTL(void)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
+    p->setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
     glPushMatrix();
     SetIllumination();
-    glTranslatef(-(p.xmax()+p.xmin())/2,-(p.ymax()+p.ymin())/2,-(p.zmax()+p.zmin())/2);
-    p.drawPatch();
+    glTranslatef(-(p->xmax()+p->xmin())/2,-(p->ymax()+p->ymin())/2,-(p->zmax()+p->zmin())/2);
+    p->drawPatch();
 //    p.drawAABB();
     //	p.drawsliceequalllayers(30);
     //p.drawslicefacet();
     glPopMatrix();
-    
+}
+
+void drawVoxelmodel(Voxelization* tree)
+{
     //second viewport
     glEnable(GL_SCISSOR_TEST);  
     glScissor(WinWidth/2,WinHeight/2,WinWidth/2,WinHeight/2);  
@@ -83,17 +93,15 @@ void drawSTL(void)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
+    gluLookAt(10,10,10,0,0,0,0,0,1);
     glPushMatrix();
     SetIllumination();
-    glTranslatef(-(p.xmax()+p.xmin())/2,-(p.ymax()+p.ymin())/2,-(p.zmax()+p.zmin())/2);
-    glTranslatef(p.xmin(),p.ymin(),p.zmin());
-    glScalef((p.xmax()-p.xmin())/pow(2,depth-1),(p.ymax()-p.ymin())/pow(2,depth-1),(p.zmax()-p.zmin())/pow(2,depth-1));
-    tree.Traverse();
+    glTranslatef(-(tree->Xmax()+tree->Xmin())/2,-(tree->Ymax()+tree->Ymin())/2,-(tree->Zmax()+tree->Zmin())/2);
+    glTranslatef(tree->Xmin(),tree->Ymin(),tree->Zmin());
+    glScalef((tree->Xmax()-tree->Xmin())/pow(2,depth-1),(tree->Ymax()-tree->Ymin())/pow(2,depth-1),(tree->Zmax()-tree->Zmin())/pow(2,depth-1));
+    tree->Traverse();
     glPopMatrix();
-    glutSwapBuffers();
 }
-*/
 
 void framebuffer_size_callback(GLFWwindow* window, int w, int h)
 {
@@ -108,23 +116,42 @@ void framebuffer_size_callback(GLFWwindow* window, int w, int h)
     glLoadIdentity();
 }
 
-void cursor_pos_callback(GLFWwindow* window, double x,double y)
+void cursor_left_pos_callback(GLFWwindow* window, double x,double y)
 {
-    angle+=x-oldmx;
-    heightz+=0.03f*(y-oldmy);
-    oldmx=x,oldmy=y;
+    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+    if (state == GLFW_PRESS)
+    {
+        angle+=x-oldmx;
+        heightz+=0.03f*(y-oldmy);
+        oldmx=x,oldmy=y;
+    }
+    else
+        return;
+}
+
+void cursor_right_pos_callback(GLFWwindow* window, double x,double y)
+{
+    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+    if (state == GLFW_PRESS)
+    {
+    }
+    else
+        return;
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
+    glfwGetCursorPos(window, &oldmx, &oldmy);
     if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
-        glfwSetCursorPosCallback(window, cursor_pos_callback); 
+        glfwSetCursorPosCallback(window, cursor_left_pos_callback); 
+    }
+    else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+        glfwSetCursorPosCallback(window, cursor_right_pos_callback); 
     }
     else
-    {
         return;
-    }
 }
 
 int main(int argc, char *argv[])
@@ -180,54 +207,16 @@ int main(int argc, char *argv[])
     {  
         glClearColor(1.0f,1.0f,1.0f,1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glColor3f(1.0,0.0,0.0);
+
+        //draw dividing line
+        drawline();
 
         //first viewport
-        glEnable(GL_SCISSOR_TEST);  
-        glScissor(0,WinHeight/2,WinWidth/2,WinHeight/2);  
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
-        glDisable(GL_SCISSOR_TEST);  
-
-        glViewport(0,WinHeight/2,WinWidth/2,WinHeight/2);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        gluPerspective(45, 1.0*WinWidth / WinHeight, 1, 1000);
-
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
-        glPushMatrix();
-        SetIllumination();
-        glTranslatef(-(p.xmax()+p.xmin())/2,-(p.ymax()+p.ymin())/2,-(p.zmax()+p.zmin())/2);
-        p.drawPatch();
-        //    p.drawAABB();
-        //	p.drawsliceequalllayers(30);
-        //p.drawslicefacet();
-        glPopMatrix();
+        drawPatchmodel(&p);
 
         //second viewport
-        glEnable(GL_SCISSOR_TEST);  
-        glScissor(WinWidth/2,WinHeight/2,WinWidth/2,WinHeight/2);  
+        drawVoxelmodel(&tree);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
-        glDisable(GL_SCISSOR_TEST);  
-
-        glViewport(WinWidth/2,WinHeight/2,WinWidth/2,WinHeight/2);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        gluPerspective(45, 1.0*WinWidth / WinHeight, 1, 1000);
-
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        p.setperspective(sin(angle*PI/180),cos(angle*PI/180),heightz,0,0,0,0,0,1);
-        glPushMatrix();
-        SetIllumination();
-        glTranslatef(-(p.xmax()+p.xmin())/2,-(p.ymax()+p.ymin())/2,-(p.zmax()+p.zmin())/2);
-        glTranslatef(p.xmin(),p.ymin(),p.zmin());
-        glScalef((p.xmax()-p.xmin())/pow(2,depth-1),(p.ymax()-p.ymin())/pow(2,depth-1),(p.zmax()-p.zmin())/pow(2,depth-1));
-        tree.Traverse();
-        glPopMatrix();
         glfwSwapBuffers(window);  
         glfwPollEvents();  
     }  
