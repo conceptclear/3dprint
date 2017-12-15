@@ -345,3 +345,9 @@ float Voxelization::Zmin(void)
 {
     return zmin;
 }
+
+void Voxelization::setperspective(double eyex,double eyey,double eyez,double centrex,double centrey,double centrez,double upx,double upy,double upz)
+{
+    float maxlength = max(max(xmax-xmin,ymax-ymin),zmax-zmin);
+    gluLookAt( 2 * eyex * maxlength, 2 * eyey * maxlength, eyez * maxlength, centrex, centrey, centrez, upx, upy, upz);
+}

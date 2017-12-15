@@ -1,5 +1,5 @@
-main : main.o ReadSTL.o Patchmodel.o Octree.o Voxelization.o Voxelization_EdgeChange_Bresenham.o Voxelization_FacetChange_FloodFill.o Voxelization_FacetChange_Scanning.o
-	g++ -g -o main main.o ReadSTL.o Patchmodel.o Octree.o Voxelization.o Voxelization_EdgeChange_Bresenham.o Voxelization_FacetChange_FloodFill.o Voxelization_FacetChange_Scanning.o -lGL -lGLU -lGLEW -lglfw
+main : main.o ReadSTL.o Patchmodel.o Octree.o Voxelization.o Voxelization_EdgeChange_Bresenham.o Voxelization_FacetChange_FloodFill.o Voxelization_FacetChange_Scanning.o textfile.o
+	g++ -g -o main main.o ReadSTL.o Patchmodel.o Octree.o Voxelization.o Voxelization_EdgeChange_Bresenham.o Voxelization_FacetChange_FloodFill.o Voxelization_FacetChange_Scanning.o textfile.o -lGL -lGLU -lGLEW -lglfw
  
 main.o : main.cpp Octree/Voxelization.h Patchmodel/Patchmodel.h
 	g++ -g -c main.cpp
@@ -17,5 +17,7 @@ Voxelization_FacetChange_FloodFill.o : Octree/Voxelization_FacetChange_FloodFill
 	g++ -g -c Octree/Voxelization_FacetChange_FloodFill.cpp
 Voxelization_FacetChange_Scanning.o : Octree/Voxelization_FacetChange_Scanning.cpp Octree/Voxelization.h
 	g++ -g -c Octree/Voxelization_FacetChange_Scanning.cpp
+textfile.o : GLSL/textfile.cpp GLSL/textfile.h
+	g++ -g -c GLSL/textfile.cpp
 clean :
-	rm main main.o ReadSTL.o Patchmodel.o Octree.o Voxelization.o Voxelization_EdgeChange_Bresenham.o Voxelization_FacetChange_FloodFill.o Voxelization_FacetChange_Scanning.o
+	rm main main.o ReadSTL.o Patchmodel.o Octree.o Voxelization.o Voxelization_EdgeChange_Bresenham.o Voxelization_FacetChange_FloodFill.o Voxelization_FacetChange_Scanning.o textfile.o

@@ -42,6 +42,8 @@ class Voxelization:public Octree
         void GetExtremum(float x_max,float x_min,float y_max,float y_min,float z_max,float z_min);
         //get the number of surfacepoint
         void GetSurfacePointNum(void);
+        //set the perspective
+        void setperspective(double eyex,double eyey,double eyez,double centrex,double centrey,double centrez,double upx,double upy,double upz);
         //return xmax
         float Xmax(void);
         //return xmin
