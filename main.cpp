@@ -2,7 +2,10 @@
 #include "Octree/Voxelization.h"
 #include <cmath>
 #include "GLSL/textfile.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/glm.hpp>
 #define PI 3.1415926
+#define BUFFER_OFFSET(offset)  ((GLvoid*)offset)
 
 using namespace std;
 GLuint vShader,fShader;
@@ -12,23 +15,16 @@ static double oldmy=-1,oldmx=-1;
 static int angle[4]={90,90,90,90};
 static float heightz[4]={0.0f,0.0f,0.0f,0.0f};
 static int depth = 7;
-GLuint vboId;
-GLuint vaoId;
+GLuint vaoId[5];
+GLuint vboHandles[5][3];  
+GLuint positionBufferHandle[5];
+GLuint colorBufferHandle[5];
+GLuint indexBufferHandle[5];
 GLuint programId;
+GLuint projectionLocation;
+GLuint cameraLocation;
+GLuint modelLocation;
 char szTitle[8] = "3dprint";
-
-float positionData[] = {  
-        -1.0,0.0,0.0,
-        1.0,0.0,0.0,
-        0.0,1.0,0.0,
-        0.0,-1.0,0.0};
-//颜色数组  
-
-float colorData[] = {  
-        0.0f, 0.0f, 0.0f,  
-        0.0f, 0.0f, 0.0f,  
-        0.0f, 0.0f, 0.0f,  
-        0.0f, 0.0f, 0.0f };  
 
 void initShader(const char *VShaderFile,const char *FShaderFile)  
 {  
@@ -160,42 +156,61 @@ void initShader(const char *VShaderFile,const char *FShaderFile)
     }  
     else//链接成功，在OpenGL管线中使用渲染程序  
     {  
-        glUseProgram(programHandle);  
-    }  
+        glUseProgram(programHandle);
+        projectionLocation = glGetUniformLocation(programHandle, "projection");
+        cameraLocation = glGetUniformLocation(programHandle, "camera");
+        modelLocation = glGetUniformLocation(programHandle, "model");
+    }
 }  
 
-void initVBO()  
+template<typename T>
+void initVBO(T* positionData, float* colorData, unsigned int positionIndices[], int viewport, int positionsize, int indexsize)
 {  
+    if(viewport>=4||viewport<0)
+        return;
     // Create and populate the buffer objects  
-    GLuint vboHandles[2];  
-    glGenBuffers(2, vboHandles);  
-    GLuint positionBufferHandle = vboHandles[0];  
-    GLuint colorBufferHandle = vboHandles[1];  
+    glGenBuffers(3, vboHandles[viewport]);  
+    positionBufferHandle[viewport] = vboHandles[viewport][0];  
+    colorBufferHandle[viewport] = vboHandles[viewport][1];  
+    indexBufferHandle[viewport] = vboHandles[viewport][2];  
   
     //绑定VBO以供使用  
-    glBindBuffer(GL_ARRAY_BUFFER,positionBufferHandle);  
+    glBindBuffer(GL_ARRAY_BUFFER,positionBufferHandle[viewport]);  
     //加载数据到VBO  
-    glBufferData(GL_ARRAY_BUFFER,12 * sizeof(float),  
-        positionData,GL_STATIC_DRAW);  
+    glBufferData(GL_ARRAY_BUFFER,positionsize * sizeof(T),  
+            positionData,GL_STATIC_DRAW);  
+    glBindBuffer(GL_ARRAY_BUFFER,0);
   
     //绑定VBO以供使用  
-    glBindBuffer(GL_ARRAY_BUFFER,colorBufferHandle);  
+    glBindBuffer(GL_ARRAY_BUFFER,colorBufferHandle[viewport]);  
     //加载数据到VBO  
-    glBufferData(GL_ARRAY_BUFFER,12 * sizeof(float),  
-        colorData,GL_STATIC_DRAW);  
+    glBufferData(GL_ARRAY_BUFFER,positionsize * sizeof(float),  
+            colorData,GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+
+    //绑定VBO以供使用  
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,indexBufferHandle[viewport]);  
+    //加载数据到VBO  
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,indexsize * sizeof(int),
+            positionIndices,GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
   
-    glGenVertexArrays(1,&vaoId);  
-    glBindVertexArray(vaoId);  
+    //绑定VAO
+    glGenVertexArrays(1,&vaoId[viewport]);
+    glBindVertexArray(vaoId[viewport]);
   
     glEnableVertexAttribArray(0);//顶点坐标  
     glEnableVertexAttribArray(1);//顶点颜色  
   
     //调用glVertexAttribPointer之前需要进行绑定操作  
-    glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);  
-    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *)NULL );  
+    glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle[viewport]);
+    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *)NULL );
   
-    glBindBuffer(GL_ARRAY_BUFFER, colorBufferHandle);  
-    glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *)NULL );  
+    glBindBuffer(GL_ARRAY_BUFFER, colorBufferHandle[viewport]);
+    glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *)NULL );
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferHandle[viewport]);
+    glBindVertexArray(0);
 }  
 
 static void error_callback(int error, const char* description)
@@ -227,36 +242,56 @@ void SetIllumination(void)
 
 void drawline(void)
 {
+    glViewport(0,0,WinWidth,WinHeight);
     //使用VAO、VBO绘制  
-    glBindVertexArray(vaoId);  
-    glDrawArrays(GL_LINES,0,4);  
-    glBindVertexArray(0);  
+    glBindVertexArray(vaoId[0]);  
+    // 使用uniform变量传递MVP矩阵
+    glm::mat4 projection = glm::mat4(1.0f);
+    glm::mat4 camera = glm::mat4(1.0f);
+    glm::mat4 model = glm::mat4(1.0f);
+    glUniformMatrix4fv(
+            projectionLocation, 1, GL_FALSE, &projection[0][0]); // 传递投影矩阵
+    glUniformMatrix4fv(
+            cameraLocation, 1, GL_FALSE, &camera[0][0]);// 传递视变换矩阵
+    glUniformMatrix4fv(
+            modelLocation, 1, GL_FALSE, &model[0][0]); // 传递模型变换矩阵
+    //glDrawArrays(GL_LINES,0,4);
+    glDrawElements(GL_LINES,4,GL_UNSIGNED_INT,BUFFER_OFFSET(0));  
+    glBindVertexArray(0);
 }
 
 void drawPatchmodel(Patchmodel* p)
 {
     //first viewport
-    glEnable(GL_SCISSOR_TEST);  
+    glEnable(GL_SCISSOR_TEST);
     glScissor(0,WinHeight/2,WinWidth/2,WinHeight/2);  
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
-    glDisable(GL_SCISSOR_TEST);  
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
+    glDisable(GL_SCISSOR_TEST);
 
     glViewport(0,WinHeight/2,WinWidth/2,WinHeight/2);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45, 1.0*WinWidth / WinHeight, 1, 1000);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    p->setperspective(sin(angle[0]*PI/180),cos(angle[0]*PI/180),heightz[0],0,0,0,0,0,1);
     glPushMatrix();
-    SetIllumination();
-    glTranslatef(-(p->xmax()+p->xmin())/2,-(p->ymax()+p->ymin())/2,-(p->zmax()+p->zmin())/2);
-    p->drawPatch();
-//    p.drawAABB();
-    //	p.drawsliceequalllayers(30);
-    //p.drawslicefacet();
+    glBindVertexArray(vaoId[1]);
+    // 投影矩阵
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 
+            (GLfloat)(WinWidth)/ WinHeight, 1.0f, 1000.0f);
+    float maxlength = max(max(p->xmax()-p->xmin(),p->ymax()-p->ymin()),p->zmax()-p->zmin());
+    glm::vec3 eyePos(GLfloat(2*maxlength*sin(angle[0]*PI/180)),GLfloat(2*maxlength*cos(angle[0]*PI/180)),maxlength*heightz[0]);
+    // 视变换矩阵
+    glm::mat4 camera = glm::lookAt(eyePos,
+            glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    // 模型变换矩阵
+    glm::mat4 model = glm::translate(glm::mat4(), glm::vec3(-(p->xmax()+p->xmin())/2,-(p->ymax()+p->ymin())/2,-(p->zmax()+p->zmin())/2));
+    // 使用uniform变量传递MVP矩阵
+    glUniformMatrix4fv(
+            projectionLocation, 1, GL_FALSE, &projection[0][0]); // 传递投影矩阵
+    glUniformMatrix4fv(
+            cameraLocation, 1, GL_FALSE, &camera[0][0]);// 传递视变换矩阵
+    glUniformMatrix4fv(
+            modelLocation, 1, GL_FALSE, &model[0][0]); // 传递模型变换矩阵
+    //使用VAO、VBO绘制  
+    glDrawElements(GL_TRIANGLES,p->m_VectorFacet.size()*3,GL_UNSIGNED_INT,BUFFER_OFFSET(0));
+    glBindVertexArray(0);
     glPopMatrix();
 }
 
@@ -270,19 +305,30 @@ void drawVoxelmodel(Voxelization* tree)
     glDisable(GL_SCISSOR_TEST);  
 
     glViewport(WinWidth/2,WinHeight/2,WinWidth/2,WinHeight/2);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45, 1.0*WinWidth / WinHeight, 1, 1000);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    tree->setperspective(sin(angle[1]*PI/180),cos(angle[1]*PI/180),heightz[1],0,0,0,0,0,1);
     glPushMatrix();
-    SetIllumination();
-    glTranslatef(-(tree->Xmax()+tree->Xmin())/2,-(tree->Ymax()+tree->Ymin())/2,-(tree->Zmax()+tree->Zmin())/2);
-    glTranslatef(tree->Xmin(),tree->Ymin(),tree->Zmin());
-    glScalef((tree->Xmax()-tree->Xmin())/pow(2,depth-1),(tree->Ymax()-tree->Ymin())/pow(2,depth-1),(tree->Zmax()-tree->Zmin())/pow(2,depth-1));
-    tree->Traverse();
+    glBindVertexArray(vaoId[2]);
+    // 投影矩阵
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 
+            (GLfloat)(WinWidth)/ WinHeight, 1.0f, 1000.0f);
+    float maxlength = max(max(tree->Xmax()-tree->Xmin(),tree->Ymax()-tree->Ymin()),tree->Zmax()-tree->Zmin());
+    glm::vec3 eyePos(GLfloat(2*maxlength*sin(angle[1]*PI/180)),GLfloat(2*maxlength*cos(angle[1]*PI/180)),maxlength*heightz[1]);
+    // 视变换矩阵
+    glm::mat4 camera = glm::lookAt(eyePos,
+            glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    // 模型变换矩阵
+    glm::mat4 model = glm::translate(glm::mat4(), glm::vec3(tree->Xmin(),tree->Ymin(),tree->Zmin()));
+    model = glm::translate(model, glm::vec3(-(tree->Xmax()+tree->Xmin())/2,-(tree->Ymax()+tree->Ymin())/2,-(tree->Zmax()+tree->Zmin())/2));
+    model = glm::scale(model, glm::vec3((tree->Xmax()-tree->Xmin())/pow(2,depth-1),(tree->Ymax()-tree->Ymin())/pow(2,depth-1),(tree->Zmax()-tree->Zmin())/pow(2,depth-1)));
+    // 使用uniform变量传递MVP矩阵
+    glUniformMatrix4fv(
+            projectionLocation, 1, GL_FALSE, &projection[0][0]); // 传递投影矩阵
+    glUniformMatrix4fv(
+            cameraLocation, 1, GL_FALSE, &camera[0][0]);// 传递视变换矩阵
+    glUniformMatrix4fv(
+            modelLocation, 1, GL_FALSE, &model[0][0]); // 传递模型变换矩阵
+    //使用VAO、VBO绘制 
+    glDrawElements(GL_QUADS,tree->point_on_surface.size()*24,GL_UNSIGNED_INT,BUFFER_OFFSET(0));
+    glBindVertexArray(0);
     glPopMatrix();
 }
 
@@ -354,11 +400,104 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         return;
 }
 
-void init()
+void init(Patchmodel* p, Voxelization* tree)
 {
-    initShader("GLSL/basic.vert","GLSL/basic.frag");  
-  
-    initVBO();  
+    //dividing line
+    float positionData0[12] = {
+        -1.0,0.0,0.0,
+        1.0,0.0,0.0,
+        0.0,1.0,0.0,
+        0.0,-1.0,0.0
+    };
+
+    float colorData0[12] = { 
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f
+    }; 
+    unsigned int positionIndices0[] = {
+        0,1,
+        2,3
+    };
+    initVBO(positionData0,colorData0,positionIndices0,0,12,4);  
+
+    //first viewport: patch model
+    int positionsize1 = p->m_VectorPoint.size()*3;
+    int indexsize1 = p->m_VectorFacet.size()*3;
+    float *positionData1 = new float[positionsize1];
+    p->GetPositionData(positionData1);
+    float *colorData1 = new float[positionsize1];
+    for(unsigned long i=0;i<p->m_VectorPoint.size();i++)
+    {
+        colorData1[3*i+0]=0.0f;
+        colorData1[3*i+1]=1.0f;
+        colorData1[3*i+2]=1.0f;
+    }
+    unsigned int *indexData1 = new unsigned int[indexsize1];
+    p->GetIndexData(indexData1);
+    initVBO(positionData1,colorData1,indexData1,1,positionsize1,indexsize1);
+    delete[] positionData1;
+    delete[] colorData1;
+    delete[] indexData1;
+
+    //second viewport
+    int positionsize2 = tree->point_on_surface.size()*24;
+    int indexsize2 = positionsize2;
+    float *positionData2 = new float[positionsize2];
+    tree->GetPositionData(positionData2);
+    float *colorData2 = new float[positionsize2];
+    for(int i=0;i<positionsize2/3;i++)
+    {
+        colorData2[3*i+0]=1.0f;
+        colorData2[3*i+1]=0.0f;
+        colorData2[3*i+2]=1.0f;
+    }
+    unsigned int *indexData2 = new unsigned int[indexsize2];
+    for(int i=0;i<int(tree->point_on_surface.size());i++)
+    {
+        /*
+        for(int j=0;j<3;j++)
+        {
+            indexData2[24*i+2*j]=8*i+j;
+            indexData2[24*i+2*j+1]=8*i+j+1;
+        }
+        indexData2[24*i+6]=8*i+3;
+        indexData2[24*i+7]=8*i;
+        for(int j=4;j<7;j++)
+        {
+            indexData2[24*i+2*j]=8*i+j;
+            indexData2[24*i+2*j+1]=8*i+j+1;
+        }
+        indexData2[24*i+14]=8*i+7;
+        indexData2[24*i+15]=8*i+4;
+        for(int j=8;j<12;j++)
+        {
+            indexData2[24*i+2*j]=8*i+j-8;
+            indexData2[24*i+2*j+1]=8*i+j-4;
+        }
+        */
+        for(int j=0;j<8;j++)
+        {
+            indexData2[24*i+j]=8*i+j;
+        }
+        for(int j=0;j<3;j++)
+        {
+            indexData2[24*i+8+4*j]=8*i+j+0;
+            indexData2[24*i+8+4*j+1]=8*i+j+1;
+            indexData2[24*i+8+4*j+2]=8*i+j+5;
+            indexData2[24*i+8+4*j+3]=8*i+j+4;
+        }
+            indexData2[24*i+20]=8*i+0;
+            indexData2[24*i+21]=8*i+3;
+            indexData2[24*i+22]=8*i+7;
+            indexData2[24*i+23]=8*i+4;
+
+    }
+    initVBO(positionData2,colorData2,indexData2,2,positionsize2,indexsize2);
+    delete[] positionData2;
+    delete[] colorData2;
+    delete[] indexData2;
 }
 
 int main(int argc, char *argv[])
@@ -368,19 +507,6 @@ int main(int argc, char *argv[])
         cout<<"Please Input the file address and the depth"<<endl;
         return -1;
     }
-    Patchmodel p;
-    Voxelization tree;
-    p.ReadSTLFile(argv[1]);//读取地址
-    depth = atoi(argv[2]);
-    cout<<"xmax:"<<p.xmax()<<"\n"<<"xmin:"<<p.xmin()<<"\n"<<"ymax:"<<p.ymax()<<"\n"<<"ymin:"<<p.ymin()<<"\n"<<"zmax:"<<p.zmax()<<"\n"<<"zmin:"<<p.zmin()<<endl;
-    //	p.sliceequalllayers(30);
-    //	p.slicefacet(90);
-    tree.GetExtremum(p.xmax(),p.xmin(),p.ymax(),p.ymin(),p.zmax(),p.zmin());
-    tree.MakeOctree(depth);
-    tree.PointToVoxel(p.m_VectorPoint);
-//    tree.EdgeToVoxel(p.m_VectorEdge,p.m_VectorPoint);
-    tree.FacetToVoxel(p.m_VectorFacet, p.m_VectorPoint);
-    tree.GetSurfacePointNum();
 
     WinWidth = 1000;
     WinHeight = 1000;
@@ -396,7 +522,7 @@ int main(int argc, char *argv[])
     {  
         glfwTerminate();  
         exit(EXIT_FAILURE);  
-    }  
+    } 
 
     glfwMakeContextCurrent(window);  
   
@@ -409,11 +535,27 @@ int main(int argc, char *argv[])
     glewExperimental = GL_TRUE;  
     glewInit();  
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     glClearColor(1.0f,1.0f,1.0f,1.0f);
+    initShader("GLSL/basic.vert","GLSL/basic.frag");  
 
-    glColor4f(1.0,1.0,0.0,0.0);
+    Patchmodel p;
+    Voxelization tree;
+    p.ReadSTLFile(argv[1]);//读取地址
+    depth = atoi(argv[2]);
+    cout<<"xmax:"<<p.xmax()<<"\n"<<"xmin:"<<p.xmin()<<"\n"<<"ymax:"<<p.ymax()<<"\n"<<"ymin:"<<p.ymin()<<"\n"<<"zmax:"<<p.zmax()<<"\n"<<"zmin:"<<p.zmin()<<endl;
+    //	p.sliceequalllayers(30);
+    //	p.slicefacet(90);
+    tree.GetExtremum(p.xmax(),p.xmin(),p.ymax(),p.ymin(),p.zmax(),p.zmin());
+    tree.MakeOctree(depth);
+    tree.PointToVoxel(p.m_VectorPoint);
+//    tree.EdgeToVoxel(p.m_VectorEdge,p.m_VectorPoint);
+    tree.FacetToVoxel(p.m_VectorFacet, p.m_VectorPoint);
+    tree.GetSurfacePointNum();
+    tree.Traverse();
 
-    init();
+    init(&p,&tree);
+
     while (!glfwWindowShouldClose(window))  
     {  
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -422,17 +564,18 @@ int main(int argc, char *argv[])
         drawline();
 
         //first viewport
-        //drawPatchmodel(&p);
+        drawPatchmodel(&p);
 
         //second viewport
-        //drawVoxelmodel(&tree);
+        drawVoxelmodel(&tree);
 
         glfwSwapBuffers(window);  
         glfwPollEvents();  
     }  
 
     glfwDestroyWindow(window);  
-    glfwTerminate();  
+    glfwTerminate();
+    glUseProgram(0);
     return 0;
 }
 

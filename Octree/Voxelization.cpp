@@ -17,7 +17,7 @@ void Voxelization::GetSurfacePointNum(void)
     for(unsigned int i=0;i<(1<<(max_height-1));i++)
     {
         num = Octree::TraverseZ(i);
-        surface_point_num.push_back(i);
+        surface_point_num.push_back(num);
         model_impact_factor.push_back(Octree::layer_impactfactor);
         /*
         cout<<num<<" voxels on the model in layer "<<i<<endl;

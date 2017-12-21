@@ -167,7 +167,9 @@ void Octree::DisplayOctree(OctreeNode *pRoot)
         cout<<"y="<<pRoot->orderstry<<endl;
         cout<<"z="<<pRoot->orderstrz<<endl;
         */
-        DrawVoxel(pRoot->orderstrx,pRoot->orderstry,pRoot->orderstrz);
+        OctreePoint opoint(pRoot->orderstrx,pRoot->orderstry,pRoot->orderstrz);
+        point_on_surface.push_back(opoint);
+        //DrawVoxel(pRoot->orderstrx,pRoot->orderstry,pRoot->orderstrz);
     }
 }
 
@@ -389,4 +391,20 @@ void Octree::DrawVoxel(unsigned int x,unsigned int y,unsigned int z)
     //    cout<<x<<":"<<y<<":"<<z<<endl;
 }
 
-
+void Octree::GetPositionData(float* positonData)
+{
+    vector<OctreePoint>::iterator iter = point_on_surface.begin();
+    int x[8] = {0,1,1,0,0,1,1,0};
+    int y[8] = {0,0,1,1,0,0,1,1};
+    int z[8] = {0,0,0,0,1,1,1,1};
+    for(int i=0;i<int(point_on_surface.size());i++)
+    {
+        for(int j=0;j<8;j++)
+        {
+            positonData[24*i+3*j+0]=iter->x+x[j];
+            positonData[24*i+3*j+1]=iter->y+y[j];
+            positonData[24*i+3*j+2]=iter->z+z[j];
+        }
+        iter++;
+    }
+}

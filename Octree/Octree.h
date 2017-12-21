@@ -15,6 +15,7 @@
 #include "../basic components/CVertex.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <vector>
 using namespace std;
 
 class OctreePoint
@@ -132,6 +133,8 @@ class Octree
         void DrawVoxel(unsigned int x,unsigned int y,unsigned int z);
         int IsEmpty()
         {return root==NULL?1:0;}
+        void GetPositionData(float* positonData); //get positiondata
+        vector<OctreePoint> point_on_surface;
    protected:
         OctreeNode *root;
         int layer_impactfactor;

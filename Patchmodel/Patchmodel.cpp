@@ -335,3 +335,23 @@ float Patchmodel::zmin(void)
 {
     return z_min;
 }
+
+void Patchmodel::GetPositionData(float* positionData)
+{
+    for(int i=0;i<m_VectorPoint.size();i++)
+    {
+        positionData[3*i+0]= m_VectorPoint[i].m_Point[0];
+        positionData[3*i+1]= m_VectorPoint[i].m_Point[1];
+        positionData[3*i+2]= m_VectorPoint[i].m_Point[2];
+    }
+}
+
+void Patchmodel::GetIndexData(unsigned int* IndexData)
+{
+    for(int i=0;i<m_VectorFacet.size();i++)
+    {
+        IndexData[3*i+0]= m_VectorFacet[i].PointIndex[0];
+        IndexData[3*i+1]= m_VectorFacet[i].PointIndex[1];
+        IndexData[3*i+2]= m_VectorFacet[i].PointIndex[2];
+    }
+}

@@ -42,6 +42,8 @@ class Patchmodel
         float xmin(void); //return x_min
         float ymin(void); //return y_min
         float zmin(void); //return z_min
+        void GetPositionData(float* positionData); //return positionData
+        void GetIndexData(unsigned int* IndexData); //return IndexData
         vector<CVertex> m_VectorPoint; //声明顶点的vector容器
         vector<CEdge> m_VectorEdge; //声明边的vector容器
         vector<CFacet> m_VectorFacet; //声明面的vector容器
