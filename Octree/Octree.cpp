@@ -391,20 +391,56 @@ void Octree::DrawVoxel(unsigned int x,unsigned int y,unsigned int z)
     //    cout<<x<<":"<<y<<":"<<z<<endl;
 }
 
-void Octree::GetPositionData(float* positonData)
+void Octree::GetPositionData(float* positionData)
 {
-    vector<OctreePoint>::iterator iter = point_on_surface.begin();
-    int x[8] = {0,1,1,0,0,1,1,0};
-    int y[8] = {0,0,1,1,0,0,1,1};
-    int z[8] = {0,0,0,0,1,1,1,1};
+    int x[4] = {0,1,1,0};
+    int y[4] = {0,0,1,1};
     for(int i=0;i<int(point_on_surface.size());i++)
     {
-        for(int j=0;j<8;j++)
+        for(int j = 0;j < 8;j++)
         {
-            positonData[24*i+3*j+0]=iter->x+x[j];
-            positonData[24*i+3*j+1]=iter->y+y[j];
-            positonData[24*i+3*j+2]=iter->z+z[j];
+            positionData[72*i+3*j]=point_on_surface[i].x+x[j%4];
+            positionData[72*i+3*j+1]=point_on_surface[i].y+y[j%4];
+            positionData[72*i+3*j+2]=point_on_surface[i].z+int(j/4);
         }
-        iter++;
+        for(int j = 0;j < 8;j++)
+        {
+            positionData[72*i+3*j+24]=point_on_surface[i].x+int(j/4);
+            positionData[72*i+3*j+25]=point_on_surface[i].y+x[j%4];
+            positionData[72*i+3*j+26]=point_on_surface[i].z+y[j%4];
+        }
+        for(int j = 0;j < 8;j++)
+        {
+            positionData[72*i+3*j+48]=point_on_surface[i].x+y[j%4];
+            positionData[72*i+3*j+49]=point_on_surface[i].y+int(j/4);
+            positionData[72*i+3*j+50]=point_on_surface[i].z+x[j%4];
+        }
+    }
+}
+
+void Octree::GetBarycentricData(float* barycentricData)
+{
+    float x[4] = {0.0,1.0,1.0,0.0};
+    float y[4] = {0.0,0.0,1.0,1.0};
+    for(int i=0;i<int(point_on_surface.size());i++)
+    {
+        for(int j = 0;j < 8;j++)
+        {
+            barycentricData[72*i+3*j]=x[j%4];
+            barycentricData[72*i+3*j+1]=y[j%4];
+            barycentricData[72*i+3*j+2]=1;
+        }
+        for(int j = 0;j < 8;j++)
+        {
+            barycentricData[72*i+3*j+24]=1;
+            barycentricData[72*i+3*j+25]=x[j%4];
+            barycentricData[72*i+3*j+26]=y[j%4];
+        }
+        for(int j = 0;j < 8;j++)
+        {
+            barycentricData[72*i+3*j+48]=y[j%4];
+            barycentricData[72*i+3*j+49]=1;
+            barycentricData[72*i+3*j+50]=x[j%4];
+        }
     }
 }

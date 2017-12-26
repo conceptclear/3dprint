@@ -44,15 +44,16 @@ class Patchmodel
         float zmin(void); //return z_min
         void GetPositionData(float* positionData); //return positionData
         void GetIndexData(unsigned int* IndexData); //return IndexData
+        void GetLayerData(float* positionData); //return layerdata
         vector<CVertex> m_VectorPoint; //声明顶点的vector容器
         vector<CEdge> m_VectorEdge; //声明边的vector容器
         vector<CFacet> m_VectorFacet; //声明面的vector容器
+        vector<vector<vector<point> > > slicingdata; //声明多层轮廓容器
     private:
         set<CVertex> m_SetPoint; //声明顶点的set容器
         set<CEdge> m_SetEdge; //声明边的set容器
         CFacet m_Facet; //声明CFacet变量
         vector<vector<point> > z_point; //声明轮廓点的容器
-        vector<vector<vector<point> > > slicingdata; //声明多层轮廓容器
         vector<set<int> > slicefacetnumber; //声明被切面片号的容器
 
         //坐标范围

@@ -231,7 +231,25 @@ void Patchmodel::drawsliceequalllayers(int layernumber)
             }
         }
     }
+}
 
+void Patchmodel::GetLayerData(float* positionData)
+{
+    float layerthickness = (z_max - z_min) / slicingdata.size();
+    int count=0;
+    for (unsigned long i = 0; i < slicingdata.size(); i++)
+    {
+        for (unsigned long j = 0; j < slicingdata[i].size(); j++)
+        {
+            for (unsigned long k = 0; k < slicingdata[i][j].size(); k++)
+            {
+                positionData[count+0] = slicingdata[i][j][k].x;
+                positionData[count+1] = slicingdata[i][j][k].y;
+                positionData[count+2] = z_min+i*layerthickness;
+                count+=3;
+            }
+        }
+    }
 }
 
 bool Patchmodel::slicefacet(unsigned long layernumber)
@@ -338,11 +356,17 @@ float Patchmodel::zmin(void)
 
 void Patchmodel::GetPositionData(float* positionData)
 {
-    for(int i=0;i<m_VectorPoint.size();i++)
+    for(int i=0;i<m_VectorFacet.size();i++)
     {
-        positionData[3*i+0]= m_VectorPoint[i].m_Point[0];
-        positionData[3*i+1]= m_VectorPoint[i].m_Point[1];
-        positionData[3*i+2]= m_VectorPoint[i].m_Point[2];
+        positionData[9*i+0]= m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[0];
+        positionData[9*i+1]= m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[1];
+        positionData[9*i+2]= m_VectorPoint[m_VectorFacet[i].PointIndex[0]].m_Point[2];
+        positionData[9*i+3]= m_VectorPoint[m_VectorFacet[i].PointIndex[1]].m_Point[0];
+        positionData[9*i+4]= m_VectorPoint[m_VectorFacet[i].PointIndex[1]].m_Point[1];
+        positionData[9*i+5]= m_VectorPoint[m_VectorFacet[i].PointIndex[1]].m_Point[2];
+        positionData[9*i+6]= m_VectorPoint[m_VectorFacet[i].PointIndex[2]].m_Point[0];
+        positionData[9*i+7]= m_VectorPoint[m_VectorFacet[i].PointIndex[2]].m_Point[1];
+        positionData[9*i+8]= m_VectorPoint[m_VectorFacet[i].PointIndex[2]].m_Point[2];
     }
 }
 
