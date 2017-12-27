@@ -16,4 +16,4 @@ The program can be run by
 The second parameter is the name of the STL model.    
 The third parameter is the depth of the octree.    
 The forth parameter is the numer of the layers of the slcing layered strategy.  
-![example] (https://github.com/conceptclear/3dprint/pictures/pic1.png "Taj Mahal")
+![example] (https://github.com/conceptclear/3dprint/blob/master/pictures/pic1.png "Taj Mahal")
