@@ -16,6 +16,8 @@ static int angle[4]={90,90,90,90};
 static float heightz[4]={0.0f,0.0f,0.0f,0.0f};
 static int depth = 7;
 static int layers = 50;
+static float viewdistance[4]={0.0,0.0,0.0,0.0};
+static float maxlength;
 GLuint vaoId[5];
 GLuint vboHandles[5][3];
 GLuint positionBufferHandle[5];
@@ -215,6 +217,12 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
+    else if (key == GLFW_KEY_R && action == GLFW_PRESS)
+    {
+        angle[0]=angle[1]=angle[2]=angle[3]=90;
+        heightz[0]=heightz[1]=heightz[2]=heightz[3]=0.0f;
+        viewdistance[0]=viewdistance[1]=viewdistance[2]=viewdistance[3]=maxlength;
+    }
 }
 
 void drawline(void)
@@ -254,8 +262,7 @@ void drawPatchmodel(Patchmodel* p)
     // 投影矩阵
     glm::mat4 projection = glm::perspective(glm::radians(45.0f),
             (GLfloat)(WinWidth)/ WinHeight, 1.0f, 1000.0f);
-    float maxlength = max(max(p->xmax()-p->xmin(),p->ymax()-p->ymin()),p->zmax()-p->zmin());
-    glm::vec3 eyePos(GLfloat(2*maxlength*sin(angle[0]*PI/180)),GLfloat(2*maxlength*cos(angle[0]*PI/180)),maxlength*heightz[0]);
+    glm::vec3 eyePos(GLfloat(2*viewdistance[0]*sin(angle[0]*PI/180)),GLfloat(2*viewdistance[0]*cos(angle[0]*PI/180)),viewdistance[0]*heightz[0]);
     // 视变换矩阵
     glm::mat4 camera = glm::lookAt(eyePos,
             glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -292,8 +299,7 @@ void drawVoxelmodel(Voxelization* tree)
     // 投影矩阵
     glm::mat4 projection = glm::perspective(glm::radians(45.0f),
             (GLfloat)(WinWidth)/ WinHeight, 1.0f, 1000.0f);
-    float maxlength = max(max(tree->Xmax()-tree->Xmin(),tree->Ymax()-tree->Ymin()),tree->Zmax()-tree->Zmin());
-    glm::vec3 eyePos(GLfloat(2*maxlength*sin(angle[1]*PI/180)),GLfloat(2*maxlength*cos(angle[1]*PI/180)),maxlength*heightz[1]);
+    glm::vec3 eyePos(GLfloat(2*viewdistance[1]*sin(angle[1]*PI/180)),GLfloat(2*viewdistance[1]*cos(angle[1]*PI/180)),viewdistance[1]*heightz[1]);
     // 视变换矩阵
     glm::mat4 camera = glm::lookAt(eyePos,
             glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -332,8 +338,7 @@ void drawequalllayers(Patchmodel* p)
     // 投影矩阵
     glm::mat4 projection = glm::perspective(glm::radians(45.0f),
             (GLfloat)(WinWidth)/ WinHeight, 1.0f, 1000.0f);
-    float maxlength = max(max(p->xmax()-p->xmin(),p->ymax()-p->ymin()),p->zmax()-p->zmin());
-    glm::vec3 eyePos(GLfloat(2*maxlength*sin(angle[2]*PI/180)),GLfloat(2*maxlength*cos(angle[2]*PI/180)),maxlength*heightz[2]);
+    glm::vec3 eyePos(GLfloat(2*viewdistance[2]*sin(angle[2]*PI/180)),GLfloat(2*viewdistance[2]*cos(angle[2]*PI/180)),viewdistance[2]*heightz[2]);
     // 视变换矩阵
     glm::mat4 camera = glm::lookAt(eyePos,
             glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -427,10 +432,24 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     }
     else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-        angle[0]=angle[1]=angle[2]=angle[3]=90;
-        heightz[0]=heightz[1]=heightz[2]=heightz[3]=0.0f;
         glfwSetCursorPosCallback(window, cursor_right_pos_callback);
     }
+    else
+        return;
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    double xpos,ypos;
+    glfwGetCursorPos(window,&xpos,&ypos);
+    if(xpos>0 && xpos<WinWidth/2 && ypos>0 && ypos<WinHeight/2)
+        viewdistance[0]*=(1-yoffset/10);
+    else if(xpos>WinWidth/2 && xpos<WinWidth && ypos>0 && ypos<WinHeight/2)
+        viewdistance[1]*=(1-yoffset/10);
+    else if(xpos>0 && xpos<WinWidth/2 && ypos>WinHeight/2 && ypos<WinHeight)
+        viewdistance[2]*=(1-yoffset/10);
+    else if(xpos>WinWidth/2 && xpos<WinWidth && ypos>WinHeight/2 && ypos<WinHeight)
+        viewdistance[3]*=(1-yoffset/10);
     else
         return;
 }
@@ -529,6 +548,7 @@ int main(int argc, char *argv[])
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwGetFramebufferSize(window, &WinWidth, &WinHeight);
+    glfwSetScrollCallback(window, scroll_callback);
     framebuffer_size_callback(window, WinWidth, WinHeight);
 
     glewExperimental = GL_TRUE;
@@ -563,6 +583,8 @@ int main(int argc, char *argv[])
     tree.FacetToVoxel(p.m_VectorFacet, p.m_VectorPoint);
     tree.GetSurfacePointNum();
     tree.Traverse();
+    maxlength = max(max(p.xmax()-p.xmin(),p.ymax()-p.ymin()),p.zmax()-p.zmin());
+    viewdistance[0]=viewdistance[1]=viewdistance[2]=viewdistance[3]=maxlength;
 
     init(&p,&tree);
 

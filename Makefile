@@ -1,6 +1,6 @@
 main : main.o ReadSTL.o Patchmodel.o Octree.o Voxelization.o Voxelization_EdgeChange_Bresenham.o Voxelization_FacetChange_FloodFill.o Voxelization_FacetChange_Scanning.o textfile.o
 	g++ -g -o main main.o ReadSTL.o Patchmodel.o Octree.o Voxelization.o Voxelization_EdgeChange_Bresenham.o Voxelization_FacetChange_FloodFill.o Voxelization_FacetChange_Scanning.o textfile.o -lGL -lGLU -lGLEW -lglfw
- 
+
 main.o : main.cpp Octree/Voxelization.h Patchmodel/Patchmodel.h
 	g++ -g -c main.cpp
 ReadSTL.o : Patchmodel/ReadSTL.cpp Patchmodel/Patchmodel.h
