@@ -581,7 +581,7 @@ int main(int argc, char *argv[])
     tree.PointToVoxel(p.m_VectorPoint);
     //    tree.EdgeToVoxel(p.m_VectorEdge,p.m_VectorPoint);
     tree.FacetToVoxel(p.m_VectorFacet, p.m_VectorPoint);
-    tree.GetSurfacePointNum();
+    //tree.GetSurfacePointNum();
     tree.Traverse();
     maxlength = max(max(p.xmax()-p.xmin(),p.ymax()-p.ymin()),p.zmax()-p.zmin());
     viewdistance[0]=viewdistance[1]=viewdistance[2]=viewdistance[3]=maxlength;

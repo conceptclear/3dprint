@@ -1,9 +1,28 @@
 #include "Octree.h"
 using namespace std;
 
-bool OctreePoint:: operator==(const OctreePoint &point)const
+void Octree::MakeRoot(OctreeNode *pRoot)
 {
-    return ((x==point.x)&&(y==point.y)&&(z==point.z));
+    if(pRoot->depth<=1)return;
+    unsigned int rootx = 2*pRoot->orderstrx;
+    unsigned int rooty = 2*pRoot->orderstry;
+    unsigned int rootz = 2*pRoot->orderstrz;
+    pRoot->Back_Left_Bottom = new OctreeNode(rootx,rooty,rootz,pRoot->depth-1);
+    pRoot->Back_Left_Top = new OctreeNode(rootx,rooty,rootz+1,pRoot->depth-1);
+    pRoot->Back_Right_Bottom = new OctreeNode(rootx,rooty+1,rootz,pRoot->depth-1);
+    pRoot->Back_Right_Top = new OctreeNode(rootx,rooty+1,rootz+1,pRoot->depth-1);
+    pRoot->Front_Left_Bottom = new OctreeNode(rootx+1,rooty,rootz,pRoot->depth-1);
+    pRoot->Front_Left_Top = new OctreeNode(rootx+1,rooty,rootz+1,pRoot->depth-1);
+    pRoot->Front_Right_Bottom = new OctreeNode(rootx+1,rooty+1,rootz,pRoot->depth-1);
+    pRoot->Front_Right_Top = new OctreeNode(rootx+1,rooty+1,rootz+1,pRoot->depth-1);
+    MakeRoot(pRoot->Back_Left_Bottom);
+    MakeRoot(pRoot->Back_Left_Top);
+    MakeRoot(pRoot->Back_Right_Bottom);
+    MakeRoot(pRoot->Back_Right_Top);
+    MakeRoot(pRoot->Front_Left_Bottom);
+    MakeRoot(pRoot->Front_Left_Top);
+    MakeRoot(pRoot->Front_Right_Bottom);
+    MakeRoot(pRoot->Front_Right_Top);
 }
 
 void Octree::MakeOctree(int height)
@@ -18,33 +37,8 @@ void Octree::MakeOctree(int height)
     }
     else
     {
-        unsigned int rootx = 2*root->orderstrx;
-        unsigned int rooty = 2*root->orderstry;
-        unsigned int rootz = 2*root->orderstrz;
-        Octree* back_left_bottom =new Octree(rootx,rooty,rootz,height-1);
-        Octree* back_left_top =new Octree(rootx,rooty,rootz+1,height-1);
-        Octree* back_right_bottom =new Octree(rootx,rooty+1,rootz,height-1);
-        Octree* back_right_top =new Octree(rootx,rooty+1,rootz+1,height-1);
-        Octree* front_left_bottom =new Octree(rootx+1,rooty,rootz,height-1);
-        Octree* front_left_top =new Octree(rootx+1,rooty,rootz+1,height-1);
-        Octree* front_right_bottom =new Octree(rootx+1,rooty+1,rootz,height-1);
-        Octree* front_right_top =new Octree(rootx+1,rooty+1,rootz+1,height-1);
-        root->Back_Left_Bottom = back_left_bottom->root;
-        root->Back_Left_Top = back_left_top->root;
-        root->Back_Right_Bottom = back_right_bottom->root;
-        root->Back_Right_Top = back_right_top->root;
-        root->Front_Left_Bottom = front_left_bottom->root;
-        root->Front_Left_Top = front_left_top->root;
-        root->Front_Right_Bottom = front_right_bottom->root;
-        root->Front_Right_Top = front_right_top->root;
-        back_left_bottom->MakeOctree(height-1);
-        back_left_top->MakeOctree(height-1);
-        back_right_bottom->MakeOctree(height-1);
-        back_right_top->MakeOctree(height-1);
-        front_left_bottom->MakeOctree(height-1);
-        front_left_top->MakeOctree(height-1);
-        front_right_bottom->MakeOctree(height-1);
-        front_right_top->MakeOctree(height-1);
+        root->depth=height;
+        MakeRoot(root);
     }
 }
 
@@ -80,19 +74,11 @@ void Octree::Traverse(void)
     PreOrder(root);
 }
 
-unsigned int Octree::TraverseZ(unsigned int z)
-{
-    unsigned int output;
-    layer_impactfactor=0;
-    output=PreOrderZ(root,z);
-    return output;
-}
-
 void Octree::PreOrder(OctreeNode *pRoot)
 {
     if(pRoot!=NULL)
     {
-        DisplayOctree(pRoot);
+        GetPoint(pRoot);
         if(pRoot->depth==1)
             return;
         PreOrder(pRoot->Back_Left_Bottom);
@@ -106,81 +92,23 @@ void Octree::PreOrder(OctreeNode *pRoot)
     }
 }
 
-unsigned int Octree::PreOrderZ(OctreeNode *pRoot, unsigned int z)
-{
-    int z_direction;
-    unsigned int num;
-    if(pRoot!=NULL)
-    {
-        num=GetContour(pRoot);
-        SetImpactFactor(pRoot);
-        if(pRoot->depth==1)
-            return num;
-        if(pRoot->depth==0)
-            pRoot->depth=max_height;
-        z_direction = z>>(pRoot->depth-2)&1;
-        if(z_direction==0)
-        {
-            num+=PreOrderZ(pRoot->Back_Left_Bottom,z);
-            num+=PreOrderZ(pRoot->Back_Right_Bottom,z);
-            num+=PreOrderZ(pRoot->Front_Left_Bottom,z);
-            num+=PreOrderZ(pRoot->Front_Right_Bottom,z);
-        }
-        else
-        {
-            num+=PreOrderZ(pRoot->Back_Left_Top,z);
-            num+=PreOrderZ(pRoot->Back_Right_Top,z);
-            num+=PreOrderZ(pRoot->Front_Left_Top,z);
-            num+=PreOrderZ(pRoot->Front_Right_Top,z);
-        }
-        return num;
-    }
-    return 0;
-}
-
-void Octree::DisplayOctree(OctreeNode *pRoot)
+void Octree::GetPoint(OctreeNode *pRoot)
 {
     if(pRoot->depth!=1)
     {
-        /*
-        cout<<"x="<<pRoot->orderstrx<<endl;
-        cout<<"y="<<pRoot->orderstry<<endl;
-        cout<<"z="<<pRoot->orderstrz<<endl;
-        cout<<"depth="<<pRoot->depth<<endl;
-        */
         return;
     }
     if(pRoot->flag!=0)
     {
-        /*
-        cout<<"x="<<pRoot->orderstrx<<endl;
-        cout<<"y="<<pRoot->orderstry<<endl;
-        cout<<"z="<<pRoot->orderstrz<<endl;
-        cout<<"depth="<<pRoot->depth<<endl;
-        */
         return;
     }
     else
     {
-        /*
-        cout<<"x="<<pRoot->orderstrx<<endl;
-        cout<<"y="<<pRoot->orderstry<<endl;
-        cout<<"z="<<pRoot->orderstrz<<endl;
-        */
+        SetImpactFactor(pRoot);
         OctreePoint opoint(pRoot->orderstrx,pRoot->orderstry,pRoot->orderstrz);
-        point_on_surface.push_back(opoint);
-        //DrawVoxel(pRoot->orderstrx,pRoot->orderstry,pRoot->orderstrz);
+        if(pRoot->pointdown==0&&pRoot->pointup==0)
+        point_on_surface.insert(opoint);
     }
-}
-
-unsigned int Octree::GetContour(OctreeNode *pRoot)
-{
-    if(pRoot->depth!=1)
-        return 0;
-    else if(pRoot->flag==0)
-        return 1;
-    else
-        return 0;
 }
 
 int Octree::GetUp(OctreeNode *pRoot)
@@ -310,111 +238,39 @@ void Octree::SetImpactFactor(OctreeNode *pRoot)
     int flagup,flagdown;
     flagup=GetUp(pRoot);
     flagdown=GetDown(pRoot);
-    pRoot->impactfactor=flagup+flagdown;
-    layer_impactfactor+=pRoot->impactfactor;
-}
-
-void Octree::DrawVoxel(unsigned int x,unsigned int y,unsigned int z)
-{
-    glColor3f(0.0f,0.0f,0.0f);
-    glBegin(GL_LINE_LOOP);
-    glVertex3i(x,y,z);
-    glVertex3i(x+1,y,z);
-    glVertex3i(x+1,y+1,z);
-    glVertex3i(x,y+1,z);
-    glEnd();
-    glBegin(GL_LINE_LOOP);
-    glVertex3i(x,y,z+1);
-    glVertex3i(x+1,y,z+1);
-    glVertex3i(x+1,y+1,z+1);
-    glVertex3i(x,y+1,z+1);
-    glEnd();
-    glBegin(GL_LINES);
-    glVertex3i(x,y,z);
-    glVertex3i(x,y,z+1);
-    glEnd();
-    glBegin(GL_LINES);
-    glVertex3i(x+1,y,z);
-    glVertex3i(x+1,y,z+1);
-    glEnd();
-    glBegin(GL_LINES);
-    glVertex3i(x+1,y+1,z);
-    glVertex3i(x+1,y+1,z+1);
-    glEnd();
-    glBegin(GL_LINES);
-    glVertex3i(x,y+1,z);
-    glVertex3i(x,y+1,z+1);
-    glEnd();
-    glColor3f(1.0f,1.0f,0.0f);
-    glBegin(GL_POLYGON);
-    glNormal3f(0,0,1);
-    glVertex3i(x,y,z);
-    glVertex3i(x+1,y,z);
-    glVertex3i(x+1,y+1,z);
-    glVertex3i(x,y+1,z);
-    glEnd();
-    glBegin(GL_POLYGON);
-    glNormal3f(0,0,1);
-    glVertex3i(x,y,z+1);
-    glVertex3i(x+1,y,z+1);
-    glVertex3i(x+1,y+1,z+1);
-    glVertex3i(x,y+1,z+1);
-    glEnd();
-    glBegin(GL_POLYGON);
-    glNormal3f(0,1,0);
-    glVertex3i(x,y,z);
-    glVertex3i(x,y,z+1);
-    glVertex3i(x+1,y,z+1);
-    glVertex3i(x+1,y,z);
-    glEnd();
-    glBegin(GL_POLYGON);
-    glNormal3f(0,1,0);
-    glVertex3i(x+1,y+1,z);
-    glVertex3i(x+1,y+1,z+1);
-    glVertex3i(x,y+1,z+1);
-    glVertex3i(x,y+1,z);
-    glEnd();
-    glBegin(GL_POLYGON);
-    glNormal3f(1,0,0);
-    glVertex3i(x+1,y+1,z);
-    glVertex3i(x+1,y+1,z+1);
-    glVertex3i(x+1,y,z+1);
-    glVertex3i(x+1,y,z);
-    glEnd();
-    glBegin(GL_POLYGON);
-    glNormal3f(1,0,0);
-    glVertex3i(x,y+1,z);
-    glVertex3i(x,y+1,z+1);
-    glVertex3i(x,y,z+1);
-    glVertex3i(x,y,z);
-    glEnd();
-    //    cout<<x<<":"<<y<<":"<<z<<endl;
+    pRoot->pointup=flagup;
+    pRoot->pointdown=flagdown;
+    layer_pointup+=pRoot->pointup;
+    layer_pointdown+=pRoot->pointdown;
 }
 
 void Octree::GetPositionData(float* positionData)
 {
     int x[4] = {0,1,1,0};
     int y[4] = {0,0,1,1};
-    for(int i=0;i<int(point_on_surface.size());i++)
+    set<OctreePoint>::iterator iter;
+    int i=0;
+    for(iter=point_on_surface.begin();iter!=point_on_surface.end();iter++)
     {
         for(int j = 0;j < 8;j++)
         {
-            positionData[72*i+3*j]=point_on_surface[i].x+x[j%4];
-            positionData[72*i+3*j+1]=point_on_surface[i].y+y[j%4];
-            positionData[72*i+3*j+2]=point_on_surface[i].z+int(j/4);
+            positionData[72*i+3*j+0]=iter->x+x[j%4];
+            positionData[72*i+3*j+1]=iter->y+y[j%4];
+            positionData[72*i+3*j+2]=iter->z+int(j/4);
         }
         for(int j = 0;j < 8;j++)
         {
-            positionData[72*i+3*j+24]=point_on_surface[i].x+int(j/4);
-            positionData[72*i+3*j+25]=point_on_surface[i].y+x[j%4];
-            positionData[72*i+3*j+26]=point_on_surface[i].z+y[j%4];
+            positionData[72*i+3*j+24]=iter->x+int(j/4);
+            positionData[72*i+3*j+25]=iter->y+x[j%4];
+            positionData[72*i+3*j+26]=iter->z+y[j%4];
         }
         for(int j = 0;j < 8;j++)
         {
-            positionData[72*i+3*j+48]=point_on_surface[i].x+y[j%4];
-            positionData[72*i+3*j+49]=point_on_surface[i].y+int(j/4);
-            positionData[72*i+3*j+50]=point_on_surface[i].z+x[j%4];
+            positionData[72*i+3*j+48]=iter->x+y[j%4];
+            positionData[72*i+3*j+49]=iter->y+int(j/4);
+            positionData[72*i+3*j+50]=iter->z+x[j%4];
         }
+        i++;
     }
 }
 

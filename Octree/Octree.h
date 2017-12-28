@@ -15,7 +15,7 @@
 #include "../basic components/CVertex.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <vector>
+#include <set>
 using namespace std;
 
 class OctreePoint
@@ -29,6 +29,7 @@ class OctreePoint
             z=copy.z;
         }
         bool operator==(const OctreePoint &point)const;
+        bool operator<(const OctreePoint &point)const;
         friend class Octree;
         friend class Voxelization;
     private:
@@ -36,6 +37,33 @@ class OctreePoint
         unsigned int y;
         unsigned int z;
 };
+
+inline bool OctreePoint:: operator==(const OctreePoint &point)const
+{
+    return ((x==point.x)&&(y==point.y)&&(z==point.z));
+}
+
+inline bool OctreePoint::operator<(const OctreePoint &point)const
+{
+    if(point.z>z)
+        return true;
+    else if(point.z==z)
+    {
+        if(point.y>y)
+            return true;
+        else if(point.y==y)
+        {
+            if(point.x>x)
+                return true;
+            else
+                return false;
+        }
+        else
+            return false;
+    }
+    else
+        return false;
+}
 
 class OctreeNode
 {
@@ -55,7 +83,8 @@ class OctreeNode
         OctreeNode
             (unsigned int strx=0, unsigned int stry=0,
              unsigned int strz=0, int node_depth = 0 ,
-             int nodeflag=1,int node_impactfactor=0,
+             int nodeflag=1,int node_pointup=0,
+             int node_pointdown=0,
              OctreeNode *back_left_bottom =NULL,
              OctreeNode *back_left_top =NULL,
              OctreeNode *back_right_bottom =NULL,
@@ -66,7 +95,8 @@ class OctreeNode
              OctreeNode *front_right_top =NULL):
                 orderstrx(strx),orderstry(stry),
                 orderstrz(strz),depth(node_depth),
-                flag(nodeflag),impactfactor(node_impactfactor),
+                flag(nodeflag),pointup(node_pointup),
+                pointdown(node_pointdown),
                 Back_Left_Bottom(back_left_bottom),
                 Back_Left_Top(back_left_top),
                 Back_Right_Bottom(back_right_bottom),
@@ -87,8 +117,9 @@ class OctreeNode
         //use 0 to define the node on the part
         //use 1 to define the node in the part
         int flag;
-        //use impactfactor to consider the impact
-        int impactfactor;
+        //use pointup and pointdown to consider the influence
+        int pointup;
+        int pointdown;
         OctreeNode *Back_Left_Bottom;
         OctreeNode *Back_Left_Top;
         OctreeNode *Back_Right_Bottom;
@@ -116,29 +147,28 @@ class Octree
         {
             DeleteRoot(root);
         }
-        //use iteration to delete the root
-        void DeleteRoot(OctreeNode *pRoot);
         //set up an octree with all nodes out of the part
         void MakeOctree(int height);
         //use perorder traversal
         void Traverse(void);
-        void PreOrder(OctreeNode *pRoot); //traverse the octree
-        void DisplayOctree(OctreeNode *pRoot); //draw
-        unsigned int TraverseZ(unsigned int z);
-        unsigned int PreOrderZ(OctreeNode *pRoot, unsigned int z); //traverse the octree by z
-        unsigned int GetContour(OctreeNode *pRoot); //get the voxel whether on the facet
-        int GetUp(OctreeNode *pRoot); //get the flag num from the up voxel
-        int GetDown(OctreeNode *pRoot); //get the flag num from the down voxel
-        void SetImpactFactor(OctreeNode *pRoot); //set impactfactor
-        void DrawVoxel(unsigned int x,unsigned int y,unsigned int z);
         int IsEmpty()
         {return root==NULL?1:0;}
         void GetPositionData(float* positionData); //get positiondata
         void GetBarycentricData(float* barycentricData); //get barycentricdata
-        vector<OctreePoint> point_on_surface;
+        set<OctreePoint> point_on_surface;
    protected:
+        //use iteration to delete the root
+        void DeleteRoot(OctreeNode *pRoot);
+        //use iteration to create root
+        void MakeRoot(OctreeNode *pRoot);
+        void PreOrder(OctreeNode *pRoot); //traverse the octree
+        void GetPoint(OctreeNode *pRoot); //draw
+        int GetUp(OctreeNode *pRoot); //get the flag num from the up voxel
+        int GetDown(OctreeNode *pRoot); //get the flag num from the down voxel
+        void SetImpactFactor(OctreeNode *pRoot); //set pointup and pointdown
         OctreeNode *root;
-        int layer_impactfactor;
+        int layer_pointup;
+        int layer_pointdown;
         int max_height;
 };
 
