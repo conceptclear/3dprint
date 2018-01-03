@@ -106,8 +106,14 @@ void Octree::GetPoint(OctreeNode *pRoot)
     {
         SetImpactFactor(pRoot);
         OctreePoint opoint(pRoot->orderstrx,pRoot->orderstry,pRoot->orderstrz);
-        if(pRoot->pointdown==0&&pRoot->pointup==0)
-        point_on_surface.insert(opoint);
+        if(pRoot->pointdown==0)
+            point_on_surface_on.insert(opoint);
+        else if(pRoot->pointdown==-1)
+            point_on_surface_out.insert(opoint);
+        else if(pRoot->pointdown==1)
+            point_on_surface_in.insert(opoint);
+        else
+            cerr<<"error occured in GetPoint"<<endl;
     }
 }
 
@@ -235,11 +241,8 @@ int Octree::GetDown(OctreeNode *pRoot)
 
 void Octree::SetImpactFactor(OctreeNode *pRoot)
 {
-    int flagup,flagdown;
-    flagup=GetUp(pRoot);
-    flagdown=GetDown(pRoot);
-    pRoot->pointup=flagup;
-    pRoot->pointdown=flagdown;
+    pRoot->pointup=GetUp(pRoot);
+    pRoot->pointdown=GetDown(pRoot);
     layer_pointup+=pRoot->pointup;
     layer_pointdown+=pRoot->pointdown;
 }
@@ -250,7 +253,51 @@ void Octree::GetPositionData(float* positionData)
     int y[4] = {0,0,1,1};
     set<OctreePoint>::iterator iter;
     int i=0;
-    for(iter=point_on_surface.begin();iter!=point_on_surface.end();iter++)
+    for(iter=point_on_surface_on.begin();iter!=point_on_surface_on.end();iter++)
+    {
+        for(int j = 0;j < 8;j++)
+        {
+            positionData[72*i+3*j+0]=iter->x+x[j%4];
+            positionData[72*i+3*j+1]=iter->y+y[j%4];
+            positionData[72*i+3*j+2]=iter->z+int(j/4);
+        }
+        for(int j = 0;j < 8;j++)
+        {
+            positionData[72*i+3*j+24]=iter->x+int(j/4);
+            positionData[72*i+3*j+25]=iter->y+x[j%4];
+            positionData[72*i+3*j+26]=iter->z+y[j%4];
+        }
+        for(int j = 0;j < 8;j++)
+        {
+            positionData[72*i+3*j+48]=iter->x+y[j%4];
+            positionData[72*i+3*j+49]=iter->y+int(j/4);
+            positionData[72*i+3*j+50]=iter->z+x[j%4];
+        }
+        i++;
+    }
+    for(iter=point_on_surface_out.begin();iter!=point_on_surface_out.end();iter++)
+    {
+        for(int j = 0;j < 8;j++)
+        {
+            positionData[72*i+3*j+0]=iter->x+x[j%4];
+            positionData[72*i+3*j+1]=iter->y+y[j%4];
+            positionData[72*i+3*j+2]=iter->z+int(j/4);
+        }
+        for(int j = 0;j < 8;j++)
+        {
+            positionData[72*i+3*j+24]=iter->x+int(j/4);
+            positionData[72*i+3*j+25]=iter->y+x[j%4];
+            positionData[72*i+3*j+26]=iter->z+y[j%4];
+        }
+        for(int j = 0;j < 8;j++)
+        {
+            positionData[72*i+3*j+48]=iter->x+y[j%4];
+            positionData[72*i+3*j+49]=iter->y+int(j/4);
+            positionData[72*i+3*j+50]=iter->z+x[j%4];
+        }
+        i++;
+    }
+    for(iter=point_on_surface_in.begin();iter!=point_on_surface_in.end();iter++)
     {
         for(int j = 0;j < 8;j++)
         {
@@ -278,7 +325,7 @@ void Octree::GetBarycentricData(float* barycentricData)
 {
     float x[4] = {0.0,1.0,1.0,0.0};
     float y[4] = {0.0,0.0,1.0,1.0};
-    for(int i=0;i<int(point_on_surface.size());i++)
+    for(int i=0;i<int(point_on_surface_on.size()+point_on_surface_out.size()+point_on_surface_in.size());i++)
     {
         for(int j = 0;j < 8;j++)
         {

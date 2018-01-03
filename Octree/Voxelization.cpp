@@ -70,6 +70,126 @@ void Voxelization::SurfacePoint(unsigned int x, unsigned int y, unsigned int z)
     //            cout<<node->orderstr<<endl;
 }
 
+void Voxelization::OuterPoint(OctreePoint point)
+{
+    OctreeNode* node = root;
+    unsigned int nummax=1<<(max_height-1);
+    if(point.x>nummax||point.y>nummax||point.z>nummax)
+    {
+        cout<<"the num is bigger than the max"<<endl;
+        return;
+    }
+    if(point.x==(unsigned int)(-1)||point.y==(unsigned int)(-1)||point.z==(unsigned int)(-1))
+    {
+        cout<<"the num is smaller than the min"<<endl;
+        return;
+    }
+    int x_direction; 
+    int y_direction; 
+    int z_direction; 
+    int position;
+    for(int j=0;j<max_height-1;j++)
+    {
+        //use bit manipulation to change to binary
+        x_direction = point.x>>(max_height-2-j)&1;
+        y_direction = point.y>>(max_height-2-j)&1;
+        z_direction = point.z>>(max_height-2-j)&1;
+        position=x_direction*4+y_direction*2+z_direction;
+        //            cout<<position<<endl;
+        switch(position)
+        {
+            case 0:
+                node=node->Back_Left_Bottom;
+                break;
+            case 1:
+                node=node->Back_Left_Top;
+                break;
+            case 2:
+                node=node->Back_Right_Bottom;
+                break;
+            case 3:
+                node=node->Back_Right_Top;
+                break;
+            case 4:
+                node=node->Front_Left_Bottom;
+                break;
+            case 5:
+                node=node->Front_Left_Top;
+                break;
+            case 6:
+                node=node->Front_Right_Bottom;
+                break;
+            case 7:
+                node=node->Front_Right_Top;
+                break;
+            default:
+                cerr<<"error"<<endl;
+                break;
+        }
+    }
+    node->flag=-1;
+    //            cout<<node->orderstr<<endl;
+}
+
+int Voxelization::GetFlag(OctreePoint point)
+{
+    unsigned int nummax=1<<(max_height-1);
+    nummax--;
+    if(point.x>nummax||point.y>nummax||point.z>nummax)
+    {
+        cout<<"the num is bigger than the max"<<endl;
+        return -10;
+    }
+    OctreeNode* node = root;
+    int x_direction; 
+    int y_direction; 
+    int z_direction; 
+    int position;
+    int pflag;
+    for(int j=0;j<max_height-1;j++)
+    {
+        //use bit manipulation to change to binary
+        x_direction = point.x>>(max_height-2-j)&1;
+        y_direction = point.y>>(max_height-2-j)&1;
+        z_direction = point.z>>(max_height-2-j)&1;
+        position=x_direction*4+y_direction*2+z_direction;
+        //            cout<<position<<endl;
+        switch(position)
+        {
+            case 0:
+                node=node->Back_Left_Bottom;
+                break;
+            case 1:
+                node=node->Back_Left_Top;
+                break;
+            case 2:
+                node=node->Back_Right_Bottom;
+                break;
+            case 3:
+                node=node->Back_Right_Top;
+                break;
+            case 4:
+                node=node->Front_Left_Bottom;
+                break;
+            case 5:
+                node=node->Front_Left_Top;
+                break;
+            case 6:
+                node=node->Front_Right_Bottom;
+                break;
+            case 7:
+                node=node->Front_Right_Top;
+                break;
+            default:
+                cerr<<"error"<<endl;
+                break;
+        }
+    }
+    pflag = node->flag;
+    node = NULL;
+    return pflag;
+}
+
 unsigned int Voxelization::ChangeCoordinate(float coordinate,float max,float min)
 {
     int nummax=1<<(max_height-1);
@@ -334,4 +454,101 @@ void Voxelization::setperspective(double eyex,double eyey,double eyez,double cen
 {
     float maxlength = max(max(xmax-xmin,ymax-ymin),zmax-zmin);
     gluLookAt( 2 * eyex * maxlength, 2 * eyey * maxlength, eyez * maxlength, centrex, centrey, centrez, upx, upy, upz);
+}
+
+void Voxelization::OuterToVoxel(void)
+{
+    int nummax=1<<(max_height-1);
+    int pflag;
+    for(int i=0;i<nummax;i++)
+    {
+        for(int j=0;j<nummax;j++)
+        {
+            OctreePoint ppoint1(i,j,0);
+            pflag=GetFlag(ppoint1);
+            if(pflag==1)
+                Outer_bfs(ppoint1);
+            OctreePoint ppoint2(i,j,nummax-1);
+            pflag=GetFlag(ppoint2);
+            if(pflag==1)
+                Outer_bfs(ppoint2);
+            OctreePoint ppoint3(0,i,j);
+            pflag=GetFlag(ppoint3);
+            if(pflag==1)
+                Outer_bfs(ppoint3);
+            OctreePoint ppoint4(nummax-1,i,j);
+            pflag=GetFlag(ppoint4);
+            if(pflag==1)
+                Outer_bfs(ppoint4);
+            OctreePoint ppoint5(j,0,i);
+            pflag=GetFlag(ppoint5);
+            if(pflag==1)
+                Outer_bfs(ppoint5);
+            OctreePoint ppoint6(j,nummax-1,i);
+            pflag=GetFlag(ppoint6);
+            if(pflag==1)
+                Outer_bfs(ppoint6);
+        }
+    }
+}
+
+void Voxelization::Outer_FloodFill(OctreePoint point)
+{
+    unsigned int nummax=1<<(max_height-1);
+    nummax--;
+    int pflag=GetFlag(point);
+    if(pflag!=1)
+        return;
+    OuterPoint(point);
+    //only fill 6-neighbour
+    int x[6]={-1,1,0,0,0,0};
+    int y[6]={0,0,-1,1,0,0};
+    int z[6]={0,0,0,0,-1,1};
+    bool check[6]={point.x==0,point.x==nummax,point.y==0,point.y==nummax,point.z==0,point.z==nummax};
+    for(int i=0;i<6;i++)
+    {
+        if(check[i])
+        {
+            continue;
+        }
+        OctreePoint mpoint(point.x+x[i],point.y+y[i],point.z+z[i]);
+        Outer_FloodFill(mpoint);
+    }
+}
+
+void Voxelization::Outer_bfs(OctreePoint point)
+{
+    unsigned int nummax=1<<(max_height-1);
+    nummax--;
+    int pflag=GetFlag(point);
+    if(pflag!=1)
+        return;
+    queue<OctreePoint> Q;
+    Q.push(point);
+    OuterPoint(point);
+    //only fill 6-neighbour
+    int x[6]={-1,1,0,0,0,0};
+    int y[6]={0,0,-1,1,0,0};
+    int z[6]={0,0,0,0,-1,1};
+    while(!Q.empty())
+    {
+        OctreePoint qpoint = Q.front();
+        Q.pop();
+        OuterPoint(qpoint);
+        bool check[6]={qpoint.x==0,qpoint.x==nummax,qpoint.y==0,qpoint.y==nummax,qpoint.z==0,qpoint.z==nummax};
+
+        for(int i=0;i<6;i++)
+        {
+            if(check[i])
+                continue;
+            OctreePoint mpoint(qpoint.x+x[i],qpoint.y+y[i],qpoint.z+z[i]);
+            pflag = GetFlag(mpoint);
+            if(pflag!=1)
+                continue;
+
+            OuterPoint(mpoint);
+            Q.push(mpoint);
+        }
+    }
+    return;
 }

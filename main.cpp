@@ -316,9 +316,15 @@ void drawVoxelmodel(Voxelization* tree)
             modelLocation, 1, GL_FALSE, &model[0][0]); // 传递模型变换矩阵
     //使用VAO、VBO绘制
     glUniform3f(
-            setcolor, 0.0f, 1.0f, 0.0f); //传递颜色矩阵
+            setcolor, 1.0f, 1.0f, 0.0f); //传递颜色矩阵(yellow)
     glUniform1i(coutedge, 4);
-    glDrawArrays(GL_QUADS,0,tree->point_on_surface.size()*72);
+    glDrawArrays(GL_QUADS,0,tree->point_on_surface_on.size()*24);
+    glUniform3f(
+            setcolor, 1.0f, 0.0f, 0.0f); //传递颜色矩阵(red)
+    glDrawArrays(GL_QUADS,tree->point_on_surface_on.size()*24,tree->point_on_surface_out.size()*24);
+    glUniform3f(
+            setcolor, 0.0f, 1.0f, 1.0f); //传递颜色矩阵(blue)
+    glDrawArrays(GL_QUADS,tree->point_on_surface_on.size()*24+tree->point_on_surface_out.size()*24,tree->point_on_surface_in.size()*24);
     glBindVertexArray(0);
     glPopMatrix();
 }
@@ -423,6 +429,31 @@ void cursor_right_pos_callback(GLFWwindow* window, double x,double y)
         return;
 }
 
+void cursor_middle_pos_callback(GLFWwindow* window, double x, double y)
+{
+    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
+    if (state == GLFW_PRESS && x>0 && x<WinWidth/2 && y<WinHeight/2 && y>0)
+    {
+        angle[0]+=x-oldmx;
+        heightz[0]+=0.03f*(y-oldmy);
+        oldmx=x,oldmy=y;
+    }
+    else if (state == GLFW_PRESS && x>WinWidth/2 && x<WinWidth && y<WinHeight/2 && y>0)
+    {
+        angle[1]+=x-oldmx;
+        heightz[1]+=0.03f*(y-oldmy);
+        oldmx=x,oldmy=y;
+    }
+    else if (state == GLFW_PRESS && x>0 && x<WinWidth/2 && y<WinHeight && y>WinHeight/2)
+    {
+        angle[2]+=x-oldmx;
+        heightz[2]+=0.03f*(y-oldmy);
+        oldmx=x,oldmy=y;
+    }
+    else
+        return;
+}
+
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
     glfwGetCursorPos(window, &oldmx, &oldmy);
@@ -433,6 +464,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
         glfwSetCursorPosCallback(window, cursor_right_pos_callback);
+    }
+    else if(button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS)
+    {
+        glfwSetCursorPosCallback(window, cursor_middle_pos_callback);
     }
     else
         return;
@@ -491,7 +526,7 @@ void init(Patchmodel* p, Voxelization* tree)
     delete[] barycentricData1;
 
     //second viewport: voxel model
-    int positionsize2 = tree->point_on_surface.size()*72;
+    int positionsize2 = (tree->point_on_surface_on.size()+tree->point_on_surface_out.size()+tree->point_on_surface_in.size())*72;
     float *positionData2 = new float[positionsize2];
     tree->GetPositionData(positionData2);
     float *barycentricData2 = new float[positionsize2];
@@ -582,6 +617,7 @@ int main(int argc, char *argv[])
     //    tree.EdgeToVoxel(p.m_VectorEdge,p.m_VectorPoint);
     tree.FacetToVoxel(p.m_VectorFacet, p.m_VectorPoint);
     //tree.GetSurfacePointNum();
+    tree.OuterToVoxel();
     tree.Traverse();
     maxlength = max(max(p.xmax()-p.xmin(),p.ymax()-p.ymin()),p.zmax()-p.zmin());
     viewdistance[0]=viewdistance[1]=viewdistance[2]=viewdistance[3]=maxlength;

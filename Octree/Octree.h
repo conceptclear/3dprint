@@ -30,6 +30,7 @@ class OctreePoint
         }
         bool operator==(const OctreePoint &point)const;
         bool operator<(const OctreePoint &point)const;
+        OctreePoint operator+(const OctreePoint &point)const;
         friend class Octree;
         friend class Voxelization;
     private:
@@ -63,6 +64,12 @@ inline bool OctreePoint::operator<(const OctreePoint &point)const
     }
     else
         return false;
+}
+
+inline OctreePoint OctreePoint::operator+(const OctreePoint &point)const
+{
+    OctreePoint out(x+point.x,y+point.y,z+point.z);
+    return out;
 }
 
 class OctreeNode
@@ -155,7 +162,9 @@ class Octree
         {return root==NULL?1:0;}
         void GetPositionData(float* positionData); //get positiondata
         void GetBarycentricData(float* barycentricData); //get barycentricdata
-        set<OctreePoint> point_on_surface;
+        set<OctreePoint> point_on_surface_on;
+        set<OctreePoint> point_on_surface_in;
+        set<OctreePoint> point_on_surface_out;
    protected:
         //use iteration to delete the root
         void DeleteRoot(OctreeNode *pRoot);

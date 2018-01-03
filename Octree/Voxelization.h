@@ -17,6 +17,7 @@
 #include <vector>
 #include <cmath>
 #include <set>
+#include <queue>
 
 class Voxelization:public Octree
 {
@@ -63,11 +64,17 @@ class Voxelization:public Octree
         void EdgeToVoxel(vector<CEdge> VectorEdge, vector<CVertex> VectorPoint);
         //transform the edegs and facet of a primitive into a regular eulerian grid
         void FacetToVoxel(vector<CFacet> VectorFacet, vector<CVertex> VectorPoint);
+        //distinguish inner points and outer points
+        void OuterToVoxel(void);
 
 
         //some basic funcitons
         //Change this point to 0
         void SurfacePoint(unsigned int x,unsigned int y,unsigned int z);
+        //Change this point to -1
+        void OuterPoint(OctreePoint point);
+        //get flag
+        int GetFlag(OctreePoint point);
         //Change coordinate from patches to voxels
         unsigned int ChangeCoordinate(float coordinate,float max,float min);
         //to check if the num is at the max vertex
@@ -121,6 +128,11 @@ class Voxelization:public Octree
         void Scanning2D(void);
         //calculate the voxels to be fill
         void CoverVoxel2D_Scanning(OctreePoint point1,OctreePoint point2,OctreePoint point3,int serial);
+
+        //Outer fill
+        void Outer_FloodFill(OctreePoint point);
+        //use bfs to fill the outer place
+        void Outer_bfs(OctreePoint point);
     private:
         float xmax,xmin,ymax,ymin,zmax,zmin;
         vector<unsigned int> surface_point_num; //the number of the voxels in all layers
