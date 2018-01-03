@@ -10,7 +10,12 @@ out vec4 FragColor;
 #extension GL_OES_standard_derivatives : enable
 float edgeFactor(){
     vec3 d = fwidth(Barycentric);
-    vec3 a3 = smoothstep(vec3(0.0), d * 0.8, Barycentric);
+    float coefficient = 0.8;
+    if(coutedge==4)
+        coefficient=0.3;
+    else
+        coefficient=0.8;
+    vec3 a3 = smoothstep(vec3(0.0), d * coefficient, Barycentric);
     return min(min(a3.x, a3.y), a3.z);
 }
 

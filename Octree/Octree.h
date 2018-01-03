@@ -163,8 +163,9 @@ class Octree
         void GetPositionData(float* positionData); //get positiondata
         void GetBarycentricData(float* barycentricData); //get barycentricdata
         set<OctreePoint> point_on_surface_on;
-        set<OctreePoint> point_on_surface_in;
-        set<OctreePoint> point_on_surface_out;
+        set<OctreePoint> point_on_surface_up;
+        set<OctreePoint> point_on_surface_down;
+        set<OctreePoint> point_on_surface_up_and_down;
    protected:
         //use iteration to delete the root
         void DeleteRoot(OctreeNode *pRoot);

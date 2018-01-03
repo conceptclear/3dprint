@@ -261,7 +261,7 @@ void drawPatchmodel(Patchmodel* p)
     glBindVertexArray(vaoId[1]);
     // 投影矩阵
     glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-            (GLfloat)(WinWidth)/ WinHeight, 1.0f, 1000.0f);
+            (GLfloat)(WinWidth)/ WinHeight, 1.0f, 2000.0f);
     glm::vec3 eyePos(GLfloat(2*viewdistance[0]*sin(angle[0]*PI/180)),GLfloat(2*viewdistance[0]*cos(angle[0]*PI/180)),viewdistance[0]*heightz[0]);
     // 视变换矩阵
     glm::mat4 camera = glm::lookAt(eyePos,
@@ -298,7 +298,7 @@ void drawVoxelmodel(Voxelization* tree)
     glBindVertexArray(vaoId[2]);
     // 投影矩阵
     glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-            (GLfloat)(WinWidth)/ WinHeight, 1.0f, 1000.0f);
+            (GLfloat)(WinWidth)/ WinHeight, 1.0f, 2000.0f);
     glm::vec3 eyePos(GLfloat(2*viewdistance[1]*sin(angle[1]*PI/180)),GLfloat(2*viewdistance[1]*cos(angle[1]*PI/180)),viewdistance[1]*heightz[1]);
     // 视变换矩阵
     glm::mat4 camera = glm::lookAt(eyePos,
@@ -321,10 +321,13 @@ void drawVoxelmodel(Voxelization* tree)
     glDrawArrays(GL_QUADS,0,tree->point_on_surface_on.size()*24);
     glUniform3f(
             setcolor, 1.0f, 0.0f, 0.0f); //传递颜色矩阵(red)
-    glDrawArrays(GL_QUADS,tree->point_on_surface_on.size()*24,tree->point_on_surface_out.size()*24);
+    glDrawArrays(GL_QUADS,tree->point_on_surface_on.size()*24,tree->point_on_surface_down.size()*24);
     glUniform3f(
             setcolor, 0.0f, 1.0f, 1.0f); //传递颜色矩阵(blue)
-    glDrawArrays(GL_QUADS,tree->point_on_surface_on.size()*24+tree->point_on_surface_out.size()*24,tree->point_on_surface_in.size()*24);
+    glDrawArrays(GL_QUADS,tree->point_on_surface_on.size()*24+tree->point_on_surface_down.size()*24,tree->point_on_surface_up.size()*24);
+    glUniform3f(
+            setcolor, 0.0f, 1.0f, 0.0f); //传递颜色矩阵(green)
+    glDrawArrays(GL_QUADS,tree->point_on_surface_on.size()*24+tree->point_on_surface_down.size()*24+tree->point_on_surface_up.size()*24,tree->point_on_surface_up_and_down.size()*24);
     glBindVertexArray(0);
     glPopMatrix();
 }
@@ -343,7 +346,7 @@ void drawequalllayers(Patchmodel* p)
     glBindVertexArray(vaoId[3]);
     // 投影矩阵
     glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-            (GLfloat)(WinWidth)/ WinHeight, 1.0f, 1000.0f);
+            (GLfloat)(WinWidth)/ WinHeight, 1.0f, 2000.0f);
     glm::vec3 eyePos(GLfloat(2*viewdistance[2]*sin(angle[2]*PI/180)),GLfloat(2*viewdistance[2]*cos(angle[2]*PI/180)),viewdistance[2]*heightz[2]);
     // 视变换矩阵
     glm::mat4 camera = glm::lookAt(eyePos,
@@ -526,7 +529,7 @@ void init(Patchmodel* p, Voxelization* tree)
     delete[] barycentricData1;
 
     //second viewport: voxel model
-    int positionsize2 = (tree->point_on_surface_on.size()+tree->point_on_surface_out.size()+tree->point_on_surface_in.size())*72;
+    int positionsize2 = (tree->point_on_surface_on.size()+tree->point_on_surface_down.size()+tree->point_on_surface_up.size()+tree->point_on_surface_up_and_down.size())*72;
     float *positionData2 = new float[positionsize2];
     tree->GetPositionData(positionData2);
     float *barycentricData2 = new float[positionsize2];
@@ -614,9 +617,8 @@ int main(int argc, char *argv[])
     tree.GetExtremum(p.xmax(),p.xmin(),p.ymax(),p.ymin(),p.zmax(),p.zmin());
     tree.MakeOctree(depth);
     tree.PointToVoxel(p.m_VectorPoint);
-    //    tree.EdgeToVoxel(p.m_VectorEdge,p.m_VectorPoint);
+    //tree.EdgeToVoxel(p.m_VectorEdge,p.m_VectorPoint);
     tree.FacetToVoxel(p.m_VectorFacet, p.m_VectorPoint);
-    //tree.GetSurfacePointNum();
     tree.OuterToVoxel();
     tree.Traverse();
     maxlength = max(max(p.xmax()-p.xmin(),p.ymax()-p.ymin()),p.zmax()-p.zmin());
